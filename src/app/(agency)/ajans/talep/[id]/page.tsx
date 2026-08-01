@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, FileDown } from 'lucide-react';
+import { ArrowLeft, FileDown, FileText } from 'lucide-react';
 import CommentThread from '@/components/CommentThread';
 import FileUploader from '@/components/FileUploader';
 import Timeline from '@/components/Timeline';
@@ -44,10 +44,17 @@ export default async function AgencyRequestPage({ params }: { params: Promise<{ 
           Tüm talepler
         </Link>
 
-        <Link href={`/ajans/talep/${request.id}/yazdir`} className="btn-secondary" target="_blank">
-          <FileDown className="h-4 w-4" />
-          PDF olarak dışa aktar
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href={`/ajans/talep/${request.id}/yazdir`} className="btn-secondary" target="_blank">
+            <FileDown className="h-4 w-4" />
+            PDF olarak indir
+          </Link>
+          {/* Route handler dosyayi dogrudan indiriyor; Link yerine <a> gerekir. */}
+          <a href={`/ajans/talep/${request.id}/word`} className="btn-secondary" download>
+            <FileText className="h-4 w-4" />
+            Word olarak indir
+          </a>
+        </div>
       </div>
 
       <div className="card overflow-hidden">

@@ -101,7 +101,8 @@ npm run dev
 
 | Sayfa | Ne yapılır |
 | --- | --- |
-| **Talepler** | Tüm markalardan gelen talepler; durum, sorumlu, iç teslim tarihi, eksik alan işaretleme |
+| **Talepler** | Tüm markalardan gelen talepler; durum, sorumlu, iç teslim tarihi, eksik alan işaretleme. "Tüm talepler / Sorumlu olduklarım" görünüm ayarı tarayıcıya özeldir |
+| **Talep detayı** | PDF ve Word olarak dışa aktarma; her ikisinde de ajans içi notlar yer almaz |
 | **Markalar** | Marka ekleme/düzenleme; her markaya ajans sorumluları ve marka ekibi atama |
 | **Kullanıcılar** | Kullanıcı oluşturma (şifreyi siz belirlersiniz), rol/ekip düzenleme, şifre sıfırlama |
 | **Portal ayarları** | Giriş sayfası başlığı, açıklama metni ve **ekip fotoğrafı** yükleme |
@@ -203,8 +204,8 @@ Bir alan eklemek:
 
 ## Bu sürümde olmayanlar
 
-- E-posta bildirimi (yeni talep / durum değişikliği için)
+- E-posta bildirimi (bildirimler uygulama içi ve masaüstü olarak çalışır)
 - PDF, tarayıcının "PDF olarak kaydet" özelliğiyle alınır; sunucu tarafında PDF
-  üretimi yoktur
+  üretimi yoktur. Word (.docx) ise sunucuda üretilir
 - Talep şablonları, tekrarlayan talepler
 - Marka tarafında raporlama
