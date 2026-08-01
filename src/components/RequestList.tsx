@@ -31,6 +31,15 @@ export default function RequestList({
 }: Props) {
   const isAgency = role === 'agency';
 
+  /**
+   * Taslakta yapilacak tek is forma devam etmek; marka tarafinda taslaklar
+   * dogrudan forma baglanir. Diger durumlarda detay sayfasi acilir.
+   */
+  const linkFor = (request: RequestListItem) =>
+    !isAgency && request.status === 'draft'
+      ? `/yeni-talep/${request.id}`
+      : `${detailBase}/${request.id}`;
+
   const [status, setStatus] = useState<RequestStatus | 'all'>('all');
   const [brandId, setBrandId] = useState('all');
   const [assignee, setAssignee] = useState('all');
@@ -209,7 +218,7 @@ export default function RequestList({
                   <tr key={request.id} className="transition-colors hover:bg-brand-50/50">
                     <td className="px-4 py-3">
                       <Link
-                        href={`${detailBase}/${request.id}`}
+                        href={linkFor(request)}
                         className="font-semibold text-slate-900 hover:text-brand-700"
                       >
                         {request.title || 'İsimsiz talep'}
@@ -249,7 +258,7 @@ export default function RequestList({
             {filtered.map((request) => (
               <Link
                 key={request.id}
-                href={`${detailBase}/${request.id}`}
+                href={linkFor(request)}
                 className="card block p-4 transition-shadow hover:shadow-card-hover"
               >
                 <div className="flex items-start justify-between gap-3">

@@ -74,11 +74,21 @@ export default async function ClientRequestPage({
               </div>
             </div>
 
-            {editable && (
+            {editable ? (
               <Link href={`/yeni-talep/${request.id}`} className="btn-primary">
                 <Pencil className="h-4 w-4" />
-                {request.status === 'draft' ? 'Taslağı düzenle' : 'Eksikleri tamamla'}
+                {request.status === 'draft' ? 'Taslağa devam et' : 'Eksikleri tamamla'}
               </Link>
+            ) : (
+              // Neden duzenlenemedigi acikca yazilsin; aksi halde "duzenle
+              // dugmesi yok" gibi gorunuyor.
+              <p className="max-w-[15rem] text-xs text-slate-500">
+                {request.status === 'submitted' || request.status === 'in_progress'
+                  ? 'Talep ajansa iletildi, cevaplar kilitlendi. Değişiklik için yorum bırakın; ajans gerekli alanları yeniden açabilir.'
+                  : request.status === 'completed'
+                    ? 'Bu talep tamamlandı.'
+                    : 'Bu talep iptal edildi.'}
+              </p>
             )}
           </div>
         </div>
