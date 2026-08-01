@@ -3,57 +3,61 @@ import { loadSettings, publicAssetUrl } from '@/lib/settings';
 import LoginForm from './LoginForm';
 
 export const dynamic = 'force-dynamic';
-
 export const metadata = { title: 'Giriş' };
 
 export default async function LoginPage() {
   const settings = await loadSettings();
   const imageUrl = publicAssetUrl(settings.login_image_path);
 
+  const paragraphs = settings.login_intro
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+
   return (
-    <main className="min-h-screen bg-soft-gradient">
-      <div className="mx-auto grid min-h-screen max-w-6xl items-center gap-10 px-4 py-10 lg:grid-cols-[1.1fr_minmax(0,420px)] lg:gap-16 lg:px-8">
-        {/* Tanitim */}
-        <section className="order-2 lg:order-1">
-          <span className="badge hidden bg-white/70 text-brand-700 ring-brand-200 lg:inline-flex">
+    <main className="min-h-screen lg:grid lg:grid-cols-2">
+      {/*
+        Gorsel paneli. Yuklenen gorsel cogunlukla kendi tipografisini ve
+        logosunu tasiyan bir afis oluyor; bu yuzden kirpilmiyor ve uzerine
+        yazi bindirilmiyor, butun olarak gosteriliyor.
+      */}
+      <section className="flex items-center justify-center bg-soft-gradient p-5 sm:p-8 lg:p-12">
+        {imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={imageUrl}
+            alt="18.12 Art ekibi"
+            className="max-h-[28vh] w-auto max-w-full rounded-2xl object-contain shadow-card-hover sm:max-h-[34vh] lg:max-h-[84vh] lg:rounded-3xl"
+          />
+        ) : (
+          <div className="flex h-40 w-full max-w-md items-center justify-center rounded-2xl bg-brand-gradient shadow-glow lg:h-96 lg:rounded-3xl">
+            <span className="text-4xl font-bold text-white/90 lg:text-5xl">18.12</span>
+          </div>
+        )}
+      </section>
+
+      {/* Metin + giris formu */}
+      <section className="flex items-center justify-center bg-white px-6 py-9 sm:px-10 lg:px-14 lg:py-12">
+        <div className="w-full max-w-md">
+          <span className="badge bg-brand-50 text-brand-700 ring-brand-200">
             İş talebi portalı
           </span>
 
-          {/* Buyuk baslik masaustunde solda; mobilde formun ustunde gosterilir. */}
-          <h1 className="mt-4 hidden bg-brand-gradient bg-clip-text text-4xl font-bold leading-tight tracking-tight text-transparent sm:text-5xl lg:block">
+          <h1 className="mt-4 bg-brand-gradient bg-clip-text text-3xl font-bold leading-tight tracking-tight text-transparent sm:text-4xl">
             {settings.login_title}
           </h1>
 
-          <div className="mt-5 max-w-xl space-y-4 text-[15px] leading-relaxed text-slate-600">
-            {settings.login_intro.split('\n').map((paragraph, index) =>
-              paragraph.trim() ? <p key={index}>{paragraph}</p> : null
-            )}
-          </div>
-
-          {imageUrl && (
-            <div className="mt-8 overflow-hidden rounded-3xl border border-white/70 shadow-card-hover">
-              {/* Ajans panelinden yuklenen ekip gorseli */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={imageUrl}
-                alt="Ekip fotoğrafı"
-                className="h-full w-full object-cover"
-              />
+          {paragraphs.length > 0 && (
+            <div className="mt-4 space-y-3 text-sm leading-relaxed text-slate-600">
+              {paragraphs.map((paragraph, index) => (
+                <p key={index}>{paragraph}</p>
+              ))}
             </div>
           )}
-        </section>
 
-        {/* Giris formu */}
-        <section className="order-1 lg:order-2">
-          <div className="mb-6 text-center lg:hidden">
-            <h1 className="bg-brand-gradient bg-clip-text text-3xl font-bold leading-tight tracking-tight text-transparent">
-              {settings.login_title}
-            </h1>
-          </div>
-
-          <div className="card p-6 sm:p-7">
-            <h2 className="text-lg font-bold text-slate-900">Giriş yapın</h2>
-            <p className="mt-1 text-sm text-slate-500">
+          <div className="card mt-7 p-6">
+            <h2 className="text-base font-bold text-slate-900">Giriş yapın</h2>
+            <p className="mt-0.5 text-sm text-slate-500">
               Hesabınız ajans tarafından tanımlanır.
             </p>
 
@@ -64,11 +68,11 @@ export default async function LoginPage() {
             </div>
           </div>
 
-          <p className="mt-4 text-center text-xs text-slate-500">
+          <p className="mt-4 text-xs text-slate-500">
             Erişiminizde bir sorun varsa ajans ekibiyle iletişime geçin.
           </p>
-        </section>
-      </div>
+        </div>
+      </section>
     </main>
   );
 }
