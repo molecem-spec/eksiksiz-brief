@@ -7,7 +7,6 @@ import {
   AlertCircle,
   ArrowLeft,
   ArrowRight,
-  Check,
   Loader2,
   Save,
   Send,
@@ -21,8 +20,6 @@ import {
   formatAnswer,
   hasValue,
   missingRequired,
-  PROJECT_TYPES,
-  projectTypeLabel,
   stepMissingCount,
   visibleFields,
   type StepId,
@@ -40,23 +37,18 @@ interface Props {
 export default function BriefWizard({ request, initialAnswers, files, flags }: Props) {
   const router = useRouter();
   const [answers, setAnswers] = useState<Answers>(initialAnswers);
-  const [projectType, setProjectType] = useState(request.project_type);
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(request.status === 'info_needed' ? 1 : 0);
   const [busy, setBusy] = useState<'save' | 'submit' | 'delete' | null>(null);
   const [message, setMessage] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
   const [showErrors, setShowErrors] = useState(false);
 
   /** info_needed durumunda yalnizca ajansin isaretledigi alanlar acilir. */
   const restrictedToFlags = request.status === 'info_needed';
-  const flagByKey = useMemo(
-    () => new Map(flags.map((flag) => [flag.field_key, flag])),
-    [flags]
-  );
+  const flagByKey = useMemo(() => new Map(flags.map((flag) => [flag.field_key, flag])), [flags]);
 
-  const steps = useMemo(() => buildSteps(projectType, answers), [projectType, answers]);
+  const steps = useMemo(() => buildSteps(), []);
   const step = steps[Math.min(index, steps.length - 1)];
-  const missing = useMemo(() => missingRequired(projectType, answers), [projectType, answers]);
-
+  const missing = useMemo(() => missingRequired(answers), [answers]);
   const progress = Math.round(((index + 1) / steps.length) * 100);
 
   function update(key: string, value: Answers[string]) {
@@ -68,7 +60,7 @@ export default function BriefWizard({ request, initialAnswers, files, flags }: P
   }
 
   async function persist(): Promise<boolean> {
-    const result = await saveAnswers(request.id, answers, projectType);
+    const result = await saveAnswers(request.id, answers);
     if (!result.ok) {
       setMessage({ tone: 'error', text: result.error ?? 'Kaydedilemedi.' });
       return false;
@@ -103,8 +95,7 @@ export default function BriefWizard({ request, initialAnswers, files, flags }: P
       return;
     }
     setBusy('submit');
-    const saved = await persist();
-    if (!saved) {
+    if (!(await persist())) {
       setBusy(null);
       return;
     }
@@ -134,7 +125,7 @@ export default function BriefWizard({ request, initialAnswers, files, flags }: P
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
           href="/panel"
-          className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-brand-700"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-brand-700"
         >
           <ArrowLeft className="h-4 w-4" />
           Taleplerime dön
@@ -143,20 +134,20 @@ export default function BriefWizard({ request, initialAnswers, files, flags }: P
       </div>
 
       {restrictedToFlags && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+        <div className="rounded-2xl border border-peach-200 bg-peach-50 p-4">
           <div className="flex items-start gap-3">
-            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-peach-600" />
             <div className="text-sm">
-              <p className="font-medium text-amber-900">Ajans bu talepte ek bilgi bekliyor</p>
-              <p className="mt-0.5 text-amber-800">
+              <p className="font-semibold text-peach-900">Ajans bu talepte ek bilgi bekliyor</p>
+              <p className="mt-0.5 text-peach-800">
                 Yalnızca aşağıda işaretlenen alanları düzenleyebilirsiniz. Tamamladıktan sonra
                 talebi yeniden iletin.
               </p>
               {flags.length > 0 && (
-                <ul className="mt-2 list-inside list-disc text-amber-900">
+                <ul className="mt-2 list-inside list-disc text-peach-900">
                   {flags.map((flag) => (
                     <li key={flag.id}>
-                      <span className="font-medium">{flag.field_label || flag.field_key}</span>
+                      <span className="font-semibold">{flag.field_label || flag.field_key}</span>
                       {flag.note ? ` — ${flag.note}` : ''}
                     </li>
                   ))}
@@ -170,14 +161,14 @@ export default function BriefWizard({ request, initialAnswers, files, flags }: P
       {/* Ilerleme */}
       <div className="card p-4">
         <div className="flex items-center justify-between text-sm">
-          <span className="font-medium text-slate-800">
+          <span className="font-semibold text-slate-800">
             Adım {index + 1} / {steps.length} · {step.title}
           </span>
           <span className="text-slate-500">%{progress}</span>
         </div>
-        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-200">
+        <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface-200">
           <div
-            className="h-full rounded-full bg-brand-600 transition-all"
+            className="h-full rounded-full bg-brand-gradient transition-all duration-300"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -191,15 +182,15 @@ export default function BriefWizard({ request, initialAnswers, files, flags }: P
                 type="button"
                 onClick={() => goTo(i)}
                 className={cn(
-                  'rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
+                  'rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors',
                   i === index
                     ? 'bg-brand-600 text-white'
-                    : 'bg-surface-100 text-slate-600 hover:bg-surface-200'
+                    : 'bg-surface-100 text-slate-600 hover:bg-brand-50'
                 )}
               >
                 {item.title}
                 {missingHere > 0 && i !== index && (
-                  <span className="ml-1 text-rose-500">•</span>
+                  <span className="ml-1 text-blossom-500">•</span>
                 )}
               </button>
             );
@@ -211,9 +202,9 @@ export default function BriefWizard({ request, initialAnswers, files, flags }: P
       <div className="card p-5 sm:p-6">
         {step.id === 'marka' && (
           <div>
-            <h2 className="text-base font-medium text-slate-900">Marka</h2>
-            <p className="mt-1 text-sm text-slate-600">
-              Bu talep <span className="font-medium text-slate-800">{request.brand?.name}</span>{' '}
+            <h2 className="section-title">Marka</h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Bu talep <span className="font-semibold text-slate-800">{request.brand?.name}</span>{' '}
               markası için oluşturuluyor.
             </p>
             <p className="mt-3 text-xs text-slate-500">
@@ -222,66 +213,23 @@ export default function BriefWizard({ request, initialAnswers, files, flags }: P
           </div>
         )}
 
-        {step.id === 'tur' && (
-          <div>
-            <h2 className="text-base font-medium text-slate-900">
-              Nasıl bir çalışma için iş talebi oluşturuyorsunuz?
-            </h2>
-            <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              {PROJECT_TYPES.map((type) => (
-                <button
-                  key={type.key}
-                  type="button"
-                  disabled={restrictedToFlags}
-                  onClick={() => setProjectType(type.key)}
-                  className={cn(
-                    'rounded-lg border px-4 py-3 text-left transition-colors',
-                    projectType === type.key
-                      ? 'border-brand-600 bg-brand-50'
-                      : 'border-surface-300 bg-white hover:border-brand-300',
-                    restrictedToFlags && 'cursor-not-allowed opacity-60'
-                  )}
-                >
-                  <span className="flex items-center justify-between gap-2 text-sm font-medium text-slate-800">
-                    {type.label}
-                    {projectType === type.key && <Check className="h-4 w-4 text-brand-600" />}
-                  </span>
-                  {type.description && (
-                    <span className="mt-0.5 block text-xs text-slate-500">{type.description}</span>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
         {step.sections.map((section) => (
-          <section key={section.id} className="[&+section]:mt-8">
-            <h2 className="text-base font-medium text-slate-900">{section.title}</h2>
+          <section key={section.id}>
+            <h2 className="section-title">{section.title}</h2>
             {section.description && (
-              <p className="mt-1 text-sm text-slate-600">{section.description}</p>
+              <p className="mt-2 text-sm text-slate-600">{section.description}</p>
             )}
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div className="mt-5 grid gap-5 sm:grid-cols-2">
               {visibleFields(section, answers).map((field) => (
-                <div
+                <FieldInput
                   key={field.key}
-                  className={cn(
-                    field.type === 'checkbox'
-                      ? 'sm:col-span-2'
-                      : field.half
-                        ? 'sm:col-span-1'
-                        : 'sm:col-span-2'
-                  )}
-                >
-                  <FieldInput
-                    field={field}
-                    value={answers[field.key] ?? null}
-                    onChange={(value) => update(field.key, value)}
-                    flagNote={flagByKey.get(field.key)?.note ?? undefined}
-                    disabled={fieldDisabled(field.key)}
-                    showError={showErrors}
-                  />
-                </div>
+                  field={field}
+                  value={answers[field.key] ?? null}
+                  onChange={(value) => update(field.key, value)}
+                  flagNote={flagByKey.get(field.key)?.note ?? undefined}
+                  disabled={fieldDisabled(field.key)}
+                  showError={showErrors}
+                />
               ))}
             </div>
           </section>
@@ -289,8 +237,8 @@ export default function BriefWizard({ request, initialAnswers, files, flags }: P
 
         {step.id === 'dosyalar' && (
           <div>
-            <h2 className="text-base font-medium text-slate-900">Dosyalar</h2>
-            <p className="mt-1 text-sm text-slate-600">
+            <h2 className="section-title">Dosyalar</h2>
+            <p className="mt-2 text-sm text-slate-600">
               Logo, kurumsal kimlik, referans görsel, ürün ve mekân fotoğrafları, menü, etkinlik
               programı gibi dosyaları buraya ekleyin.
             </p>
@@ -303,7 +251,6 @@ export default function BriefWizard({ request, initialAnswers, files, flags }: P
         {step.id === 'kontrol' && (
           <ReviewStep
             answers={answers}
-            projectType={projectType}
             brandName={request.brand?.name ?? '—'}
             missing={missing}
             onJump={(stepId) => {
@@ -317,10 +264,10 @@ export default function BriefWizard({ request, initialAnswers, files, flags }: P
       {message && (
         <p
           className={cn(
-            'rounded-lg px-3 py-2 text-sm ring-1 ring-inset',
+            'rounded-xl px-3 py-2 text-sm ring-1 ring-inset',
             message.tone === 'ok'
               ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
-              : 'bg-rose-50 text-rose-700 ring-rose-200'
+              : 'bg-blossom-50 text-blossom-700 ring-blossom-200'
           )}
         >
           {message.text}
@@ -328,7 +275,7 @@ export default function BriefWizard({ request, initialAnswers, files, flags }: P
       )}
 
       {/* Alt eylemler */}
-      <div className="sticky bottom-0 -mx-4 flex flex-wrap items-center gap-2 border-t border-surface-200 bg-white/95 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-xl sm:border sm:px-4">
+      <div className="sticky bottom-0 -mx-4 flex flex-wrap items-center gap-2 border-t border-surface-200 bg-white/95 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-2xl sm:border sm:px-4">
         <button
           type="button"
           className="btn-secondary"
@@ -391,48 +338,40 @@ export default function BriefWizard({ request, initialAnswers, files, flags }: P
 
 function ReviewStep({
   answers,
-  projectType,
   brandName,
   missing,
   onJump,
 }: {
   answers: Answers;
-  projectType: string;
   brandName: string;
   missing: ReturnType<typeof missingRequired>;
   onJump: (stepId: StepId) => void;
 }) {
-  const steps = buildSteps(projectType, answers).filter((s) => s.sections.length > 0);
+  const steps = buildSteps().filter((s) => s.sections.length > 0);
 
   return (
     <div>
-      <h2 className="text-base font-medium text-slate-900">Cevaplarınızı kontrol edin</h2>
-      <p className="mt-1 text-sm text-slate-600">
+      <h2 className="section-title">Cevaplarınızı kontrol edin</h2>
+      <p className="mt-2 text-sm text-slate-600">
         Ajansa ilettikten sonra cevaplar kilitlenir; değişiklik için ajans alanı yeniden açmalıdır.
       </p>
 
-      <dl className="mt-4 grid gap-3 rounded-lg bg-surface-50 p-4 text-sm sm:grid-cols-2">
-        <div>
-          <dt className="text-xs text-slate-500">Marka</dt>
-          <dd className="font-medium text-slate-800">{brandName}</dd>
-        </div>
-        <div>
-          <dt className="text-xs text-slate-500">Çalışma türü</dt>
-          <dd className="font-medium text-slate-800">{projectTypeLabel(projectType)}</dd>
-        </div>
-      </dl>
+      <div className="mt-4 rounded-2xl bg-soft-gradient p-4 text-sm">
+        <p className="text-xs text-slate-500">Marka</p>
+        <p className="font-semibold text-slate-800">{brandName}</p>
+      </div>
 
       {missing.length > 0 && (
-        <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-4">
-          <p className="text-sm font-medium text-rose-800">
+        <div className="mt-4 rounded-2xl border border-blossom-200 bg-blossom-50 p-4">
+          <p className="text-sm font-semibold text-blossom-800">
             {missing.length} zorunlu alan eksik. Talep bu haliyle iletilemez.
           </p>
-          <ul className="mt-2 space-y-1 text-sm text-rose-700">
+          <ul className="mt-2 space-y-1 text-sm text-blossom-700">
             {missing.map((item) => (
               <li key={item.field.key}>
                 <button
                   type="button"
-                  className="underline underline-offset-2 hover:text-rose-900"
+                  className="underline underline-offset-2 hover:text-blossom-900"
                   onClick={() => onJump(item.stepId)}
                 >
                   {item.stepTitle} · {item.field.label}
@@ -451,19 +390,19 @@ function ReviewStep({
                 <h3 className="text-sm font-semibold text-slate-800">{section.title}</h3>
                 <button
                   type="button"
-                  className="text-xs text-brand-700 hover:underline"
+                  className="text-xs font-semibold text-brand-700 hover:underline"
                   onClick={() => onJump(step.id)}
                 >
                   Düzenle
                 </button>
               </div>
-              <dl className="mt-2 divide-y divide-surface-200 rounded-lg border border-surface-200">
+              <dl className="mt-2 divide-y divide-surface-200 rounded-2xl border border-surface-200">
                 {visibleFields(section, answers).map((field) => (
-                  <div key={field.key} className="grid gap-1 px-3 py-2 sm:grid-cols-3">
-                    <dt className="text-xs text-slate-500">{field.label}</dt>
+                  <div key={field.key} className="grid gap-1 px-3.5 py-2.5 sm:grid-cols-3">
+                    <dt className="text-xs font-medium text-slate-500">{field.label}</dt>
                     <dd
                       className={cn(
-                        'text-sm sm:col-span-2',
+                        'whitespace-pre-wrap text-sm sm:col-span-2',
                         hasValue(answers[field.key]) ? 'text-slate-800' : 'text-slate-400'
                       )}
                     >

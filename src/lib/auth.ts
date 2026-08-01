@@ -26,16 +26,9 @@ export async function requireUser(): Promise<SessionUser> {
   if (!profile) redirect('/giris?hata=profil');
   if (!profile.is_active) redirect('/giris?hata=pasif');
 
-  const brandQuery =
-    profile.role === 'agency'
-      ? supabase.from('brands').select('*').order('name')
-      : supabase
-          .from('brands')
-          .select('*, user_brands!inner(user_id)')
-          .eq('user_brands.user_id', user.id)
-          .order('name');
-
-  const { data: brands } = await brandQuery;
+  // RLS zaten sinirliyor: ajans tum markalari, musteri yalnizca yetkili
+  // oldugu markalari gorur.
+  const { data: brands } = await supabase.from('brands').select('*').order('name');
 
   return { profile: profile as Profile, brands: (brands ?? []) as Brand[] };
 }

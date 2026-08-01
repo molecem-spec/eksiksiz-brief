@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Eksiksiz Brif',
-  description: 'Ajans iş talebi portalı',
+  title: { default: '18.12 Art Brief Portalı', template: '%s · 18.12 Art Brief Portalı' },
+  description: 'İş talebi portalı',
   robots: { index: false, follow: false },
 };
 

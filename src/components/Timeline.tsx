@@ -17,11 +17,11 @@ export default function Timeline({ events }: { events: TimelineItem[] }) {
     <ol className="relative space-y-4 border-l border-surface-200 pl-5">
       {events.map((event) => (
         <li key={event.id} className="relative">
-          <span className="absolute -left-[1.4rem] top-1.5 h-2 w-2 rounded-full bg-brand-400 ring-4 ring-white" />
+          <span className="absolute -left-[1.4rem] top-1.5 h-2 w-2 rounded-full bg-brand-gradient ring-4 ring-white" />
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-sm font-medium text-slate-800">{eventLabel(event.type)}</p>
+            <p className="text-sm font-semibold text-slate-800">{eventLabel(event.type)}</p>
             {!event.client_visible && (
-              <span className="badge bg-amber-50 text-amber-800 ring-amber-200">
+              <span className="badge bg-peach-50 text-peach-800 ring-peach-200">
                 <Lock className="h-3 w-3" />
                 Ajans içi
               </span>

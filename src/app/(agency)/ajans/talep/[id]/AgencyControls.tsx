@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, Save } from 'lucide-react';
-import { assignRequest, setAgencyNote, setStatus } from '@/app/actions/requests';
+import { assignRequest, setAgencyNote, setDeadline, setStatus } from '@/app/actions/requests';
 import { AGENCY_STATUS_OPTIONS, STATUS_META } from '@/lib/status';
 import type { RequestStatus } from '@/types/db';
 
@@ -12,6 +12,7 @@ interface Props {
   status: RequestStatus;
   assignedTo: string | null;
   agencyNote: string | null;
+  deadline: string | null;
   staff: { id: string; name: string }[];
 }
 
@@ -21,46 +22,27 @@ export default function AgencyControls({
   status,
   assignedTo,
   agencyNote,
+  deadline,
   staff,
 }: Props) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [note, setNote] = useState(agencyNote ?? '');
   const [statusNote, setStatusNote] = useState('');
+  const [due, setDue] = useState(deadline ?? '');
   const [error, setError] = useState<string | null>(null);
 
-  async function changeStatus(next: RequestStatus) {
-    setBusy('status');
+  async function run(key: string, action: () => Promise<{ ok: boolean; error?: string }>) {
+    setBusy(key);
     setError(null);
-    const result = await setStatus(requestId, next, statusNote || undefined);
+    const result = await action();
     setBusy(null);
     if (!result.ok) {
-      setError(result.error ?? 'Durum değiştirilemedi.');
-      return;
-    }
-    setStatusNote('');
-    router.refresh();
-  }
-
-  async function changeAssignee(userId: string) {
-    setBusy('assign');
-    setError(null);
-    const result = await assignRequest(requestId, userId || null);
-    setBusy(null);
-    if (!result.ok) {
-      setError(result.error ?? 'Atama yapılamadı.');
-      return;
+      setError(result.error ?? 'İşlem tamamlanamadı.');
+      return false;
     }
     router.refresh();
-  }
-
-  async function saveNote() {
-    setBusy('note');
-    setError(null);
-    const result = await setAgencyNote(requestId, note);
-    setBusy(null);
-    if (!result.ok) setError(result.error ?? 'Not kaydedilemedi.');
-    else router.refresh();
+    return true;
   }
 
   return (
@@ -73,11 +55,16 @@ export default function AgencyControls({
               key={option}
               type="button"
               disabled={busy !== null || option === status}
-              onClick={() => changeStatus(option)}
+              onClick={async () => {
+                const ok = await run('status', () =>
+                  setStatus(requestId, option, statusNote || undefined)
+                );
+                if (ok) setStatusNote('');
+              }}
               className={
                 option === status
-                  ? 'flex items-center justify-between rounded-lg border border-brand-600 bg-brand-50 px-3 py-2 text-sm font-medium text-brand-800'
-                  : 'flex items-center justify-between rounded-lg border border-surface-300 bg-white px-3 py-2 text-sm text-slate-700 transition-colors hover:border-brand-300 hover:bg-brand-50/40 disabled:opacity-50'
+                  ? 'flex items-center justify-between rounded-xl border border-brand-400 bg-brand-50 px-3.5 py-2.5 text-sm font-semibold text-brand-800'
+                  : 'flex items-center justify-between rounded-xl border border-surface-300 bg-white px-3.5 py-2.5 text-sm text-slate-700 transition-colors hover:border-brand-300 hover:bg-brand-50/50 disabled:opacity-50'
               }
             >
               {STATUS_META[option].label}
@@ -93,7 +80,37 @@ export default function AgencyControls({
           onChange={(e) => setStatusNote(e.target.value)}
         />
         <p className="mt-1.5 text-xs text-slate-500">
-          “Ek bilgi bekleniyor” seçildiğinde müşteri, işaretlediğiniz alanları düzenleyebilir.
+          “Ek bilgi bekleniyor” seçildiğinde marka ekibi, işaretlediğiniz alanları düzenleyebilir.
+        </p>
+      </div>
+
+      <div>
+        <label className="label" htmlFor="deadline">
+          İç teslim tarihi
+        </label>
+        <div className="mt-1.5 flex gap-2">
+          <input
+            id="deadline"
+            type="date"
+            className="input"
+            value={due}
+            onChange={(e) => setDue(e.target.value)}
+          />
+          <button
+            type="button"
+            className="btn-secondary shrink-0"
+            disabled={busy !== null}
+            onClick={() => run('deadline', () => setDeadline(requestId, due || null))}
+          >
+            {busy === 'deadline' ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4" />
+            )}
+          </button>
+        </div>
+        <p className="mt-1.5 text-xs text-slate-500">
+          Yalnızca ajans görür. Marka ekibine gösterilmez.
         </p>
       </div>
 
@@ -103,10 +120,10 @@ export default function AgencyControls({
         </label>
         <select
           id="assignee"
-          className="input mt-1"
+          className="input mt-1.5"
           value={assignedTo ?? ''}
           disabled={busy !== null}
-          onChange={(e) => changeAssignee(e.target.value)}
+          onChange={(e) => run('assign', () => assignRequest(requestId, e.target.value || null))}
         >
           <option value="">Atanmadı</option>
           {staff.map((person) => (
@@ -124,8 +141,8 @@ export default function AgencyControls({
         <textarea
           id="agency-note"
           rows={3}
-          className="input mt-1"
-          placeholder="Müşteri bu notu görmez."
+          className="input mt-1.5"
+          placeholder="Marka ekibi bu notu görmez."
           value={note}
           onChange={(e) => setNote(e.target.value)}
         />
@@ -133,7 +150,7 @@ export default function AgencyControls({
           type="button"
           className="btn-secondary mt-2 w-full"
           disabled={busy !== null}
-          onClick={saveNote}
+          onClick={() => run('note', () => setAgencyNote(requestId, note))}
         >
           {busy === 'note' ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -144,7 +161,7 @@ export default function AgencyControls({
         </button>
       </div>
 
-      {error && <p className="text-sm text-rose-600">{error}</p>}
+      {error && <p className="text-sm text-blossom-600">{error}</p>}
     </div>
   );
 }

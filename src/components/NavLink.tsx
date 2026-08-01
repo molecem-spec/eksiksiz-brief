@@ -18,8 +18,10 @@ export default function NavLink({
     <Link
       href={href}
       className={cn(
-        'whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
-        active ? 'bg-brand-50 text-brand-700' : 'text-slate-600 hover:bg-surface-100'
+        'whitespace-nowrap rounded-xl px-3 py-1.5 text-sm font-semibold transition-colors',
+        active
+          ? 'bg-brand-100 text-brand-800'
+          : 'text-slate-600 hover:bg-brand-50 hover:text-brand-700'
       )}
     >
       {children}

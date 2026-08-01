@@ -1,19 +1,19 @@
 import AppShell from '@/components/AppShell';
 import { requireClient } from '@/lib/auth';
-import { createClient } from '@/lib/supabase/server';
+import { loadSettings } from '@/lib/settings';
 
 export default async function ClientLayout({ children }: { children: React.ReactNode }) {
-  const { profile } = await requireClient();
+  const { profile, brands } = await requireClient();
+  const settings = await loadSettings();
 
-  const supabase = await createClient();
-  const { data: company } = profile.company_id
-    ? await supabase.from('companies').select('name').eq('id', profile.company_id).maybeSingle()
-    : { data: null };
+  // Ust barda kisinin ekibi, yoksa yetkili oldugu markalar gosterilir.
+  const subline = profile.team_name || brands.map((brand) => brand.name).join(', ') || null;
 
   return (
     <AppShell
       profile={profile}
-      companyName={company?.name}
+      appName={settings.app_name}
+      subline={subline}
       nav={[{ href: '/panel', label: 'Taleplerim' }]}
     >
       {children}

@@ -163,7 +163,7 @@ export default function FileUploader({
       )}
 
       {error && (
-        <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 ring-1 ring-inset ring-rose-200">
+        <p className="rounded-lg bg-blossom-50 px-3 py-2 text-sm text-blossom-700 ring-1 ring-inset ring-blossom-200">
           {error}
         </p>
       )}
@@ -194,7 +194,7 @@ export default function FileUploader({
               {canDelete && (
                 <button
                   type="button"
-                  className="btn-ghost px-2 text-rose-600 hover:bg-rose-50"
+                  className="btn-ghost px-2 text-blossom-600 hover:bg-blossom-50"
                   title="Sil"
                   disabled={busy}
                   onClick={() => handleDelete(file)}

@@ -10,7 +10,6 @@ import type { Answers, RequestFieldFlag } from '@/types/db';
 
 interface Props {
   requestId: string;
-  projectType: string;
   answers: Answers;
   flags: RequestFieldFlag[];
 }
@@ -19,7 +18,7 @@ interface Props {
  * Brif cevaplarini gosterir ve her alanin yanina "eksik isaretle" eylemi ekler.
  * Isaretlenen alanlar musteri tarafinda yeniden duzenlenebilir hale gelir.
  */
-export default function FlaggableAnswers({ requestId, projectType, answers, flags }: Props) {
+export default function FlaggableAnswers({ requestId, answers, flags }: Props) {
   const router = useRouter();
   const [editing, setEditing] = useState<Field | null>(null);
   const [note, setNote] = useState('');
@@ -54,20 +53,20 @@ export default function FlaggableAnswers({ requestId, projectType, answers, flag
   return (
     <div className="space-y-4">
       {openFlags.length > 0 && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
-          <p className="text-sm font-medium text-amber-900">
+        <div className="rounded-lg border border-peach-200 bg-peach-50 p-3">
+          <p className="text-sm font-medium text-peach-900">
             {openFlags.length} alan eksik olarak işaretlendi
           </p>
           <ul className="mt-2 space-y-1">
             {openFlags.map((flag) => (
-              <li key={flag.id} className="flex items-center gap-2 text-sm text-amber-900">
+              <li key={flag.id} className="flex items-center gap-2 text-sm text-peach-900">
                 <span className="flex-1">
                   <span className="font-medium">{flag.field_label}</span>
                   {flag.note ? ` — ${flag.note}` : ''}
                 </span>
                 <button
                   type="button"
-                  className="rounded p-1 hover:bg-amber-100"
+                  className="rounded p-1 hover:bg-peach-100"
                   title="İşareti kaldır"
                   disabled={busy}
                   onClick={() => clear(flag.id)}
@@ -77,14 +76,13 @@ export default function FlaggableAnswers({ requestId, projectType, answers, flag
               </li>
             ))}
           </ul>
-          <p className="mt-2 text-xs text-amber-800">
+          <p className="mt-2 text-xs text-peach-800">
             Müşterinin bu alanları düzenleyebilmesi için talebi “Ek bilgi bekleniyor” durumuna alın.
           </p>
         </div>
       )}
 
       <AnswerSections
-        projectType={projectType}
         answers={answers}
         flagNoteFor={(key) => {
           const flag = flagFor(key);
@@ -94,7 +92,7 @@ export default function FlaggableAnswers({ requestId, projectType, answers, flag
           flagFor(field.key) ? null : (
             <button
               type="button"
-              className="rounded p-1 text-slate-400 transition-colors hover:bg-amber-50 hover:text-amber-600"
+              className="rounded p-1 text-slate-400 transition-colors hover:bg-peach-50 hover:text-peach-600"
               title="Bu alanı eksik olarak işaretle"
               onClick={() => {
                 setEditing(field);
@@ -125,7 +123,7 @@ export default function FlaggableAnswers({ requestId, projectType, answers, flag
               onChange={(e) => setNote(e.target.value)}
             />
 
-            {error && <p className="mt-2 text-sm text-rose-600">{error}</p>}
+            {error && <p className="mt-2 text-sm text-blossom-600">{error}</p>}
 
             <div className="mt-4 flex justify-end gap-2">
               <button

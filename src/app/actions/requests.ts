@@ -28,16 +28,13 @@ async function currentProfile() {
 }
 
 /** Yeni taslak olusturur ve kimligini dondurur. */
-export async function createDraft(
-  brandId: string,
-  projectType: string
-): Promise<ActionResult<{ id: string }>> {
+export async function createDraft(brandId: string): Promise<ActionResult<{ id: string }>> {
   const { supabase, profile } = await currentProfile();
   if (!profile) return { ok: false, error: 'Oturum bulunamadı.' };
 
   const { data: brand } = await supabase
     .from('brands')
-    .select('id, company_id')
+    .select('id')
     .eq('id', brandId)
     .maybeSingle();
 
@@ -46,10 +43,8 @@ export async function createDraft(
   const { data, error } = await supabase
     .from('requests')
     .insert({
-      company_id: brand.company_id,
       brand_id: brand.id,
       created_by: profile.id,
-      project_type: projectType,
       status: 'draft',
       answers: {},
     })
@@ -62,7 +57,6 @@ export async function createDraft(
     request_id: data.id,
     actor_id: profile.id,
     type: 'created',
-    detail: { project_type: projectType },
   });
 
   revalidatePath('/panel');
@@ -70,19 +64,14 @@ export async function createDraft(
 }
 
 /** Taslak veya "ek bilgi bekleniyor" durumundaki talebin cevaplarini kaydeder. */
-export async function saveAnswers(
-  requestId: string,
-  answers: Answers,
-  projectType?: string
-): Promise<ActionResult> {
+export async function saveAnswers(requestId: string, answers: Answers): Promise<ActionResult> {
   const { supabase, profile } = await currentProfile();
   if (!profile) return { ok: false, error: 'Oturum bulunamadı.' };
 
-  const columns = deriveColumns(answers);
-  const payload: Record<string, unknown> = { answers, ...columns };
-  if (projectType) payload.project_type = projectType;
-
-  const { error } = await supabase.from('requests').update(payload).eq('id', requestId);
+  const { error } = await supabase
+    .from('requests')
+    .update({ answers, ...deriveColumns(answers) })
+    .eq('id', requestId);
   if (error) {
     return {
       ok: false,
@@ -102,13 +91,13 @@ export async function submitRequest(requestId: string): Promise<ActionResult> {
 
   const { data: request } = await supabase
     .from('requests')
-    .select('id, project_type, answers')
+    .select('id, answers')
     .eq('id', requestId)
     .maybeSingle();
 
   if (!request) return { ok: false, error: 'Talep bulunamadı.' };
 
-  const missing = missingRequired(request.project_type, (request.answers ?? {}) as Answers);
+  const missing = missingRequired((request.answers ?? {}) as Answers);
   if (missing.length > 0) {
     return {
       ok: false,
@@ -209,6 +198,33 @@ export async function assignRequest(
     actor_id: profile.id,
     type: 'assigned',
     detail: { assigned_to: userId },
+    client_visible: false,
+  });
+
+  revalidatePath('/ajans');
+  revalidatePath(`/ajans/talep/${requestId}`);
+  return { ok: true };
+}
+
+/** Ajans: ic teslim tarihini belirler. Musteri bu alani gormez. */
+export async function setDeadline(
+  requestId: string,
+  deadline: string | null
+): Promise<ActionResult> {
+  const { supabase, profile } = await currentProfile();
+  if (!profile || profile.role !== 'agency') return { ok: false, error: 'Yetkiniz yok.' };
+
+  const { error } = await supabase
+    .from('requests')
+    .update({ deadline: deadline || null })
+    .eq('id', requestId);
+  if (error) return { ok: false, error: 'Teslim tarihi kaydedilemedi.' };
+
+  await supabase.from('request_events').insert({
+    request_id: requestId,
+    actor_id: profile.id,
+    type: 'deadline_set',
+    detail: { deadline },
     client_visible: false,
   });
 

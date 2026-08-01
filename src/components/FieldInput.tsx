@@ -57,25 +57,25 @@ export default function FieldInput({
     <div className={cn(field.half ? 'sm:col-span-1' : 'sm:col-span-2')}>
       <label className="label" htmlFor={id}>
         {field.label}
-        {field.required && <span className="ml-1 text-rose-500">*</span>}
+        {field.required && <span className="ml-1 text-blossom-500">*</span>}
         {disabled && <Lock className="ml-1.5 inline h-3 w-3 text-slate-400" />}
       </label>
 
       {field.help && <p className="mt-0.5 text-xs text-slate-500">{field.help}</p>}
 
       {flagNote !== undefined && flagNote !== null && (
-        <p className="mt-1.5 rounded-md bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800 ring-1 ring-inset ring-amber-200">
+        <p className="mt-1.5 rounded-md bg-peach-50 px-2.5 py-1.5 text-xs text-peach-800 ring-1 ring-inset ring-peach-200">
           <span className="font-medium">Ajans notu:</span> {flagNote || 'Bu alanı tamamlayın.'}
         </p>
       )}
 
       <div className="mt-1.5">{renderControl()}</div>
-      {invalid && <p className="mt-1 text-xs text-rose-600">Bu alan zorunlu.</p>}
+      {invalid && <p className="mt-1 text-xs text-blossom-600">Bu alan zorunlu.</p>}
     </div>
   );
 
   function renderControl() {
-    const base = cn('input', invalid && 'border-rose-300 focus:border-rose-500');
+    const base = cn('input', invalid && 'border-blossom-300 focus:border-blossom-500');
 
     switch (field.type) {
       case 'textarea':

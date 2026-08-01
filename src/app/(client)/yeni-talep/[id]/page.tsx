@@ -4,14 +4,10 @@ import { createClient } from '@/lib/supabase/server';
 import type { Answers, BriefRequest, RequestFieldFlag, RequestFile } from '@/types/db';
 import BriefWizard from './BriefWizard';
 
-export const metadata = { title: 'İş talebi formu · Eksiksiz Brif' };
+export const metadata = { title: 'İş talebi formu' };
 export const dynamic = 'force-dynamic';
 
-export default async function EditRequestPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function EditRequestPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   await requireClient();
   const supabase = await createClient();

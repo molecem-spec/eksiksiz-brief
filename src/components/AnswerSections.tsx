@@ -4,11 +4,10 @@ import { cn } from '@/lib/utils';
 import type { Answers } from '@/types/db';
 
 interface Props {
-  projectType: string;
   answers: Answers;
   /** Alan basina ek eylem (ajans panelinde "eksik işaretle") */
   renderAction?: (field: Field) => ReactNode;
-  /** Alan basina uyari rozeti (isaretlenmis eksik alanlar) */
+  /** Alan basina uyari notu (isaretlenmis eksik alanlar) */
   flagNoteFor?: (fieldKey: string) => string | null | undefined;
   /** Bos alanlar da gosterilsin mi */
   showEmpty?: boolean;
@@ -16,17 +15,14 @@ interface Props {
 
 /** Brif cevaplarini bolum bolum okunur bicimde listeler. */
 export default function AnswerSections({
-  projectType,
   answers,
   renderAction,
   flagNoteFor,
   showEmpty = true,
 }: Props) {
-  const sections = allSections(projectType, answers);
-
   return (
     <div className="space-y-6">
-      {sections.map((section) => {
+      {allSections().map((section) => {
         const fields = visibleFields(section, answers).filter(
           (field) => showEmpty || hasValue(answers[field.key])
         );
@@ -34,23 +30,21 @@ export default function AnswerSections({
 
         return (
           <section key={section.id}>
-            <h3 className="text-sm font-semibold text-slate-800">{section.title}</h3>
-            <dl className="mt-2 divide-y divide-surface-200 overflow-hidden rounded-lg border border-surface-200 bg-white">
+            <h3 className="section-title text-sm">{section.title}</h3>
+            <dl className="mt-2.5 divide-y divide-surface-200 overflow-hidden rounded-2xl border border-surface-200 bg-white">
               {fields.map((field) => {
                 const flagNote = flagNoteFor?.(field.key);
+                const flagged = flagNote !== undefined && flagNote !== null;
                 const filled = hasValue(answers[field.key]);
                 return (
                   <div
                     key={field.key}
-                    className={cn(
-                      'grid gap-1 px-3 py-2.5 sm:grid-cols-3',
-                      flagNote !== undefined && flagNote !== null && 'bg-amber-50'
-                    )}
+                    className={cn('grid gap-1 px-4 py-3 sm:grid-cols-3', flagged && 'bg-peach-50')}
                   >
-                    <dt className="text-xs text-slate-500">
+                    <dt className="text-xs font-medium text-slate-500">
                       {field.label}
                       {field.required && !filled && (
-                        <span className="ml-1 font-medium text-rose-500">eksik</span>
+                        <span className="ml-1 font-semibold text-blossom-600">eksik</span>
                       )}
                     </dt>
                     <dd className="sm:col-span-2">
@@ -63,12 +57,13 @@ export default function AnswerSections({
                         >
                           {filled ? formatAnswer(answers[field.key]) : 'Belirtilmedi'}
                         </span>
-                        {renderAction && <span className="no-print shrink-0">{renderAction(field)}</span>}
+                        {renderAction && (
+                          <span className="no-print shrink-0">{renderAction(field)}</span>
+                        )}
                       </div>
-                      {flagNote !== undefined && flagNote !== null && (
-                        <p className="mt-1.5 text-xs text-amber-800">
-                          <span className="font-medium">Eksik olarak işaretlendi.</span>{' '}
-                          {flagNote}
+                      {flagged && (
+                        <p className="mt-1.5 text-xs text-peach-800">
+                          <span className="font-semibold">Eksik olarak işaretlendi.</span> {flagNote}
                         </p>
                       )}
                     </dd>

@@ -10,7 +10,8 @@ export type RequestStatus =
 
 export type RequestPriority = 'low' | 'normal' | 'high' | 'urgent';
 
-export interface Company {
+/** Marka = müşteri. Sistemde tek seviye vardır. */
+export interface Brand {
   id: string;
   name: string;
   contact_email: string | null;
@@ -19,21 +20,14 @@ export interface Company {
   created_at: string;
 }
 
-export interface Brand {
-  id: string;
-  company_id: string;
-  name: string;
-  is_active: boolean;
-  created_at: string;
-}
-
 export interface Profile {
   id: string;
   email: string;
   full_name: string;
+  /** Kişinin bağlı olduğu ekip, örn. "18.12 Art Ekibi" */
+  team_name: string;
   phone: string | null;
   role: UserRole;
-  company_id: string | null;
   is_active: boolean;
   created_at: string;
 }
@@ -44,14 +38,14 @@ export type Answers = Record<string, string | string[] | boolean | null>;
 export interface BriefRequest {
   id: string;
   ref: number;
-  company_id: string;
   brand_id: string;
   created_by: string | null;
   title: string;
-  project_type: string;
   status: RequestStatus;
   priority: RequestPriority;
+  /** Yayın / etkinlik tarihi (müşteri girer) */
   use_date: string | null;
+  /** Ajansın belirlediği iç teslim tarihi (müşteri görmez) */
   deadline: string | null;
   answers: Answers;
   assigned_to: string | null;
@@ -108,6 +102,16 @@ export interface RequestEvent {
 /** Liste ekranlarinda kullanilan, iliskileri gomulu talep kaydi */
 export interface RequestListItem extends BriefRequest {
   brand: Pick<Brand, 'id' | 'name'> | null;
-  company: Pick<Company, 'id' | 'name'> | null;
   assignee: Pick<Profile, 'id' | 'full_name'> | null;
+}
+
+/** Giris ekrani metinleri ve gorseli */
+export interface SiteSettings {
+  id: number;
+  app_name: string;
+  login_title: string;
+  login_intro: string;
+  login_image_path: string | null;
+  updated_at: string;
+  updated_by: string | null;
 }

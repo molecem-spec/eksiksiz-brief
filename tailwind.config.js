@@ -7,33 +7,65 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Ana renk: pastel lila. Butonlar ve vurgular buradan gelir.
         brand: {
-          50: '#f0f4ff',
-          100: '#e0e9ff',
-          200: '#c7d7fe',
-          300: '#a5bbfd',
-          400: '#7c96fa',
-          500: '#5a72f5',
-          600: '#3d52ea',
-          700: '#2f3fd4',
-          800: '#2a36ab',
-          900: '#283387',
-          950: '#1a1f52',
+          50: '#f6f2ff',
+          100: '#ede5ff',
+          200: '#ddcfff',
+          300: '#c6adfb',
+          400: '#ac89f4',
+          500: '#9169e9',
+          600: '#7a4fd8',
+          700: '#663fbb',
+          800: '#553599',
+          900: '#472e7c',
         },
+        // Ikincil: pastel pembe
+        blossom: {
+          50: '#fff2f8',
+          100: '#ffe4f0',
+          200: '#ffc9e2',
+          300: '#ffa1cb',
+          400: '#fb74ae',
+          500: '#f04f92',
+          600: '#dc3576',
+          700: '#b9275e',
+          800: '#98234e',
+          900: '#7f2244',
+        },
+        // Uceuncul: pastel turuncu / seftali
+        peach: {
+          50: '#fff6ee',
+          100: '#ffead8',
+          200: '#ffd2ae',
+          300: '#ffb27a',
+          400: '#ff8d44',
+          500: '#fb6f1d',
+          600: '#ec5410',
+          700: '#c43e0f',
+          800: '#9c3314',
+          900: '#7e2c13',
+        },
+        // Yumusak, hafif mor tonlu yuzeyler
         surface: {
           0: '#ffffff',
-          50: '#f8f9fc',
-          100: '#f1f3f9',
-          200: '#e4e8f4',
-          300: '#d1d8ed',
+          50: '#fdfaff',
+          100: '#f8f3fc',
+          200: '#efe7f5',
+          300: '#e0d4ea',
         },
       },
       boxShadow: {
-        card: '0 1px 3px 0 rgba(0,0,0,0.06),0 1px 2px -1px rgba(0,0,0,0.04)',
-        'card-hover': '0 4px 12px 0 rgba(0,0,0,0.08),0 2px 4px -1px rgba(0,0,0,0.04)',
+        card: '0 1px 3px 0 rgba(90,60,140,0.07),0 1px 2px -1px rgba(90,60,140,0.05)',
+        'card-hover': '0 6px 20px -4px rgba(90,60,140,0.14),0 2px 6px -2px rgba(90,60,140,0.08)',
+        glow: '0 8px 30px -8px rgba(145,105,233,0.45)',
+      },
+      backgroundImage: {
+        'brand-gradient': 'linear-gradient(135deg,#9169e9 0%,#f04f92 55%,#fb6f1d 100%)',
+        'soft-gradient': 'linear-gradient(135deg,#f6f2ff 0%,#fff2f8 50%,#fff6ee 100%)',
       },
       animation: {
-        'fade-in': 'fadeIn 0.15s ease-out',
+        'fade-in': 'fadeIn 0.2s ease-out',
       },
       keyframes: {
         fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },

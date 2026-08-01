@@ -4,7 +4,7 @@ import { Printer } from 'lucide-react';
 
 export default function PrintButton() {
   return (
-    <div className="no-print flex items-center justify-between gap-3 rounded-lg bg-surface-100 px-4 py-3">
+    <div className="no-print flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-soft-gradient px-4 py-3">
       <p className="text-sm text-slate-600">
         Yazdırma penceresinde hedef olarak <strong>PDF olarak kaydet</strong> seçeneğini kullanın.
       </p>

@@ -1,20 +1,12 @@
 import { createClient } from '@/lib/supabase/server';
 import type { CommentItem } from '@/components/CommentThread';
 import type { TimelineItem } from '@/components/Timeline';
-import type {
-  BriefRequest,
-  Brand,
-  Company,
-  Profile,
-  RequestFieldFlag,
-  RequestFile,
-} from '@/types/db';
+import type { BriefRequest, Brand, Profile, RequestFieldFlag, RequestFile } from '@/types/db';
 
 export interface RequestDetail {
   request: BriefRequest;
   brand: Pick<Brand, 'id' | 'name'> | null;
-  company: Pick<Company, 'id' | 'name'> | null;
-  creator: Pick<Profile, 'id' | 'full_name' | 'email'> | null;
+  creator: Pick<Profile, 'id' | 'full_name' | 'email' | 'team_name'> | null;
   assignee: Pick<Profile, 'id' | 'full_name'> | null;
   files: RequestFile[];
   comments: CommentItem[];
@@ -32,7 +24,7 @@ export async function loadRequestDetail(id: string): Promise<RequestDetail | nul
 
   const { data: request } = await supabase
     .from('requests')
-    .select('*, brand:brands(id, name), company:companies(id, name)')
+    .select('*, brand:brands(id, name)')
     .eq('id', id)
     .maybeSingle();
 
@@ -68,7 +60,7 @@ export async function loadRequestDetail(id: string): Promise<RequestDetail | nul
   const { data: people } = personIds.size
     ? await supabase
         .from('profiles')
-        .select('id, full_name, email, role')
+        .select('id, full_name, email, role, team_name')
         .in('id', Array.from(personIds))
     : { data: [] };
 
@@ -82,7 +74,6 @@ export async function loadRequestDetail(id: string): Promise<RequestDetail | nul
   return {
     request: request as BriefRequest,
     brand: (request as any).brand ?? null,
-    company: (request as any).company ?? null,
     creator: request.created_by ? (peopleMap.get(request.created_by) ?? null) : null,
     assignee: request.assigned_to ? (peopleMap.get(request.assigned_to) ?? null) : null,
     files: (files ?? []) as RequestFile[],
@@ -92,6 +83,7 @@ export async function loadRequestDetail(id: string): Promise<RequestDetail | nul
       is_internal: comment.is_internal,
       created_at: comment.created_at,
       author_name: nameOf(comment.author_id),
+      author_team: peopleMap.get(comment.author_id)?.team_name ?? null,
       author_role: peopleMap.get(comment.author_id)?.role ?? null,
     })),
     flags: (flags ?? []) as RequestFieldFlag[],

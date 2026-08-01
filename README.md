@@ -1,11 +1,11 @@
-# Eksiksiz Brif
+# 18.12 Art Brief Portalı
 
-Ajans müşterilerinin iş taleplerini eksiksiz biçimde ilettiği, çok müşterili
+Ajans müşterilerinin iş taleplerini eksiksiz biçimde ilettiği, çok markalı
 (multi-tenant) müşteri portalı.
 
-Tüm müşteriler aynı adresten giriş yapar (`brief.1812art.com` gibi). Her kullanıcı
-yalnızca kendisine yetki verilen markaları ve o markalara ait talepleri görür.
-Veri ayrımı arayüzde değil, **Supabase Row Level Security** seviyesinde uygulanır.
+Tüm markalar aynı adresten giriş yapar. Her kullanıcı yalnızca kendisine yetki
+verilen markaları ve o markalara ait talepleri görür. Veri ayrımı arayüzde
+değil, **Supabase Row Level Security** seviyesinde uygulanır.
 
 ---
 
@@ -20,34 +20,32 @@ Tailwind CSS · Vercel
 
 ### 1. Supabase projesi
 
-[supabase.com](https://supabase.com) üzerinde yeni bir proje açın (bölge:
-Frankfurt önerilir).
-
 **SQL Editor**'de sırasıyla şu dosyaları çalıştırın:
 
-1. `supabase/migrations/001_init.sql` — tablolar, RLS politikaları, fonksiyonlar
-2. `supabase/migrations/002_storage_and_guards.sql` — dosya deposu ve kolon korumaları
+1. `supabase/migrations/001_init.sql`
+2. `supabase/migrations/002_storage_and_guards.sql`
+3. `supabase/migrations/003_single_level_brands.sql`
+
+> 003, "müşteri şirketi + marka" olan iki seviyeli yapıyı tek seviyeye indirir.
+> Daha önce 001–002 ile kurulum yaptıysanız 003'ü çalıştırmanız yeterli;
+> `companies` tablosu silinir, markalar ve talepler korunur. Aynı adda birden
+> fazla marka varsa migration durur — önce markaları birleştirin.
 
 ### 2. Kayıt olmayı kapatın
 
 **Authentication → Sign In / Providers → Email**
 
 - `Enable Email provider`: açık
-- `Confirm email`: açık
 - **`Allow new users to sign up`: KAPALI**
 
-Bu kritik: müşteriler kendi kendilerine hesap açamamalı. Hesaplar yalnızca ajans
-panelinden davetle oluşturulur.
+Hesaplar yalnızca ajans panelinden açılır.
 
 **Authentication → URL Configuration**
 
-- Site URL: `https://brief.1812art.com`
-- Redirect URLs: `https://brief.1812art.com/auth/callback` ve
-  `http://localhost:3000/auth/callback`
+- Site URL: portalın adresi
+- Redirect URLs: `<adres>/auth/callback` ve `http://localhost:3100/auth/callback`
 
 ### 3. Ortam değişkenleri
-
-`.env.local.example` dosyasını `.env.local` olarak kopyalayıp doldurun:
 
 ```bash
 cp .env.local.example .env.local
@@ -60,22 +58,22 @@ cp .env.local.example .env.local
 | `SUPABASE_SERVICE_ROLE_KEY` | Project Settings → API → service_role (gizli) |
 | `NEXT_PUBLIC_APP_URL` | Uygulamanın adresi |
 
-`SUPABASE_SERVICE_ROLE_KEY` yalnızca sunucuda, kullanıcı daveti sırasında ve
-çağıranın ajans kullanıcısı olduğu doğrulandıktan sonra kullanılır. Asla
-istemciye gönderilmez.
+`SUPABASE_SERVICE_ROLE_KEY` yalnızca sunucuda, kullanıcı oluşturma ve şifre
+sıfırlama sırasında, çağıranın ajans kullanıcısı olduğu doğrulandıktan sonra
+kullanılır. İstemciye hiçbir zaman gönderilmez.
 
 ### 4. İlk ajans kullanıcısı
-
-Sistemde henüz kimse yokken davet gönderecek bir ajans kullanıcısı gerekir.
 
 **Authentication → Users → Add user** ile kendinize bir hesap açın, sonra SQL
 Editor'de rolü yükseltin:
 
 ```sql
 update public.profiles
-   set role = 'agency', full_name = 'Adınız Soyadınız'
+   set role = 'agency', full_name = 'Adınız Soyadınız', team_name = '18.12 Art Ekibi'
  where email = 'siz@1812art.com';
 ```
+
+Bundan sonraki tüm kullanıcıları panelden ekleyebilirsiniz.
 
 ### 5. Çalıştırma
 
@@ -86,21 +84,33 @@ npm run dev
 
 ---
 
-## Kullanım akışı
+## Kullanım
 
-**Ajans:**
+### Ajans
 
-1. `Müşteriler ve markalar` → müşteri şirketi ve markalarını ekleyin
-2. `Kullanıcılar` → müşteri kullanıcısını davet edin, erişeceği markaları seçin
-3. `Talepler` → gelen talepleri inceleyin, eksik alanları bayrakla işaretleyin,
-   talebi `Ek bilgi bekleniyor` durumuna alın
+| Sayfa | Ne yapılır |
+| --- | --- |
+| **Talepler** | Tüm markalardan gelen talepler; durum, sorumlu, iç teslim tarihi, eksik alan işaretleme |
+| **Markalar** | Marka ekleme/düzenleme; her markaya ajans sorumluları ve marka ekibi atama |
+| **Kullanıcılar** | Kullanıcı oluşturma (şifreyi siz belirlersiniz), rol/ekip düzenleme, şifre sıfırlama |
+| **Portal ayarları** | Giriş sayfası başlığı, açıklama metni ve **ekip fotoğrafı** yükleme |
 
-**Müşteri:**
+### Marka (müşteri)
 
-1. E-postasına gelen bağlantıyla giriş yapar
-2. `Yeni iş talebi oluştur` → marka → çalışma türü → adım adım form
-3. Taslak kaydeder, sonra devam eder, zorunlu alanlar tamamlanınca ajansa iletir
+1. E-posta + şifre ile giriş yapar
+2. `Yeni iş talebi oluştur` → marka seçer → 9 soruluk formu doldurur
+3. Taslak kaydeder, sonra devam eder; zorunlu alanlar tamamlanınca ajansa iletir
 4. Ajans ek bilgi isterse yalnızca işaretlenen alanları düzenleyip yeniden iletir
+
+Herkes üst bardaki anahtar simgesinden kendi şifresini değiştirebilir.
+
+### Marka arayüzünü görmek
+
+1. `Kullanıcılar` → `Yeni kullanıcı ekle`
+2. Rol: **Marka kullanıcısı**, bir marka seçin, şifreyi üretin
+3. Tarayıcıda **gizli pencere** açıp o hesapla girin
+
+Aynı tarayıcıda iki oturum tutulamaz; gizli pencere en pratik yol.
 
 ---
 
@@ -108,50 +118,55 @@ npm run dev
 
 | Tablo | Açıklama |
 | --- | --- |
-| `companies` | Müşteri şirketi (tenant) |
-| `brands` | Şirkete bağlı markalar |
-| `profiles` | `auth.users` karşılığı; rol ve şirket bilgisi |
-| `user_brands` | Kullanıcı ↔ marka yetkisi (çok-a-çok) |
-| `requests` | İş talebi; tüm brif cevapları `answers` (jsonb) içinde |
+| `brands` | Marka = müşteri. Tek seviye. |
+| `profiles` | `auth.users` karşılığı; rol (`agency` / `client`) ve `team_name` |
+| `user_brands` | Kullanıcı ↔ marka bağı. Müşteride "erişebilir", ajansta "sorumludur" |
+| `requests` | İş talebi; tüm cevaplar `answers` (jsonb) içinde |
 | `request_files` | Yüklenen dosyaların kaydı |
-| `request_comments` | Yorumlar; `is_internal` olanlar müşteriye kapalı |
+| `request_comments` | Yorumlar; `is_internal` olanlar markaya kapalı |
 | `request_field_flags` | Ajansın "bu alan eksik" işaretleri |
 | `request_events` | Talep geçmişi |
+| `site_settings` | Giriş sayfası metinleri ve görseli |
 
 Talep durumları: `draft` → `submitted` → `info_needed` / `in_progress` →
 `completed` (veya `cancelled`).
 
+Tarihler:
+
+- **Talep tarihi** — otomatik (ajansa iletilme anı)
+- **Yayın / etkinlik tarihi** — marka girer
+- **İç teslim tarihi** — yalnızca ajans girer ve görür
+
 ### Güvenlik notları
 
-- Müşteri kullanıcısı yalnızca `company_id`'si eşleşen **ve** `user_brands`
-  üzerinden yetkilendirildiği markaların taleplerini görür.
+- Müşteri kullanıcısı yalnızca `user_brands` üzerinden yetkilendirildiği
+  markaların taleplerini görür.
 - İletilmiş talep müşteri tarafından değiştirilemez (`requests_update` politikası
   yalnızca `draft` ve `info_needed` durumlarına izin verir).
-- `assigned_to`, `agency_note`, `status`, `submitted_at` gibi operasyon alanları
-  müşteri tarafından değiştirilemez (`guard_request_columns` tetikleyicisi).
-- Kullanıcı kendi rolünü veya şirketini değiştiremez
-  (`guard_profile_privileges` tetikleyicisi).
-- Dosyalar özel bir Storage kovasında tutulur; erişim `<talep_id>/...` yol
-  desenine ve `can_access_request()` kuralına bağlıdır. İndirme, kısa ömürlü
-  imzalı bağlantıyla yapılır.
-- `info_needed` durumunda arayüz yalnızca işaretlenmiş alanları düzenlemeye açar.
-  Veritabanı bu durumda alan bazında değil, talep bazında yetki verir.
+- `status`, `assigned_to`, `agency_note`, `deadline` gibi alanlar müşteri
+  tarafından değiştirilemez (`guard_request_columns` tetikleyicisi).
+- Kullanıcı kendi rolünü veya ekibini değiştiremez (`guard_profile_privileges`).
+- Talep dosyaları özel bir kovada; erişim `<talep_id>/...` yol desenine ve
+  `can_access_request()` kuralına bağlı, indirme kısa ömürlü imzalı bağlantıyla.
+- Giriş görseli ayrı, herkese açık bir kovada (`site-assets`) tutulur; yazma
+  yalnızca ajansa açıktır.
+- `info_needed` durumunda alan bazlı kilit arayüzdedir; veritabanı talep
+  bazında yetki verir.
 
 ---
 
-## Brif formunu genişletmek
+## Talep formunu değiştirmek
 
-Sorular kod içinde veri olarak tanımlıdır; yeni alan eklemek için arayüze
-dokunmaya gerek yoktur.
+Sorular kod içinde veri olarak tanımlıdır; yeni alan eklemek migration
+gerektirmez (cevaplar `answers` jsonb'de tutulur).
 
 | Dosya | İçerik |
 | --- | --- |
-| `src/lib/brief/common.ts` | Tüm taleplerde sorulan temel bilgiler, tasarım yönlendirmeleri, format/ölçü alanları |
-| `src/lib/brief/event.ts` | Etkinlik bilgileri bölümü |
-| `src/lib/brief/projectTypes.ts` | 15 proje türü ve türe özel sorular |
+| `src/lib/brief/common.ts` | 9 ana soru (`BRIEF_SECTION`) ve ek bilgiler (`EXTRA_SECTION`) |
 | `src/lib/brief/index.ts` | Adım kurgusu, zorunluluk denetimi, kolon türetme |
+| `src/lib/brief/types.ts` | Alan tipleri |
 
-Bir alan eklemek için ilgili `fields` dizisine yeni bir nesne yazmak yeterli:
+Bir alan eklemek:
 
 ```ts
 {
@@ -160,28 +175,25 @@ Bir alan eklemek için ilgili `fields` dizisine yeni bir nesne yazmak yeterli:
   type: 'textarea',      // text | textarea | date | time | number | tel | email | select | multiselect | checkbox
   required: true,
   half: true,            // yarım genişlik
+  help: 'Yönlendirme metni',
   showIf: (a) => a['baska_alan'] === 'Evet',  // koşullu gösterim
 }
 ```
-
-Cevaplar `requests.answers` içinde anahtar → değer olarak tutulduğu için yeni
-alan eklemek migration gerektirmez.
 
 ---
 
 ## Deploy (Vercel)
 
 1. Repoyu Vercel'e bağlayın
-2. Environment Variables bölümüne `.env.local` içindeki dört değişkeni girin
-3. Domain olarak `brief.1812art.com` ekleyin
-4. Supabase → Authentication → URL Configuration'da bu adresi tanımlayın
+2. Environment Variables'a dört değişkeni girin
+3. Domain'i ekleyin ve Supabase → Authentication → URL Configuration'da tanımlayın
 
 ---
 
 ## Bu sürümde olmayanlar
 
 - E-posta bildirimi (yeni talep / durum değişikliği için)
-- PDF çıktısı tarayıcının "PDF olarak kaydet" özelliğiyle alınır; sunucu
-  tarafında PDF üretimi yoktur
-- Talep şablonları ve tekrarlayan talepler
-- Müşteri tarafında raporlama
+- PDF, tarayıcının "PDF olarak kaydet" özelliğiyle alınır; sunucu tarafında PDF
+  üretimi yoktur
+- Talep şablonları, tekrarlayan talepler
+- Marka tarafında raporlama

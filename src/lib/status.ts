@@ -12,26 +12,26 @@ export const STATUS_META: Record<RequestStatus, StatusMeta> = {
   draft: {
     label: 'Taslak',
     clientLabel: 'Taslaklar',
-    badge: 'bg-slate-100 text-slate-700 ring-slate-200',
+    badge: 'bg-surface-100 text-slate-600 ring-surface-300',
     dot: 'bg-slate-400',
   },
   submitted: {
     label: 'Ajansa iletildi',
     clientLabel: 'Ajansa iletilenler',
-    badge: 'bg-blue-50 text-blue-700 ring-blue-200',
-    dot: 'bg-blue-500',
+    badge: 'bg-brand-50 text-brand-700 ring-brand-200',
+    dot: 'bg-brand-500',
   },
   info_needed: {
     label: 'Ek bilgi bekleniyor',
     clientLabel: 'Ek bilgi bekleyenler',
-    badge: 'bg-amber-50 text-amber-800 ring-amber-200',
-    dot: 'bg-amber-500',
+    badge: 'bg-peach-50 text-peach-700 ring-peach-200',
+    dot: 'bg-peach-500',
   },
   in_progress: {
     label: 'İşleme alındı',
     clientLabel: 'İşleme alınanlar',
-    badge: 'bg-violet-50 text-violet-700 ring-violet-200',
-    dot: 'bg-violet-500',
+    badge: 'bg-blossom-50 text-blossom-700 ring-blossom-200',
+    dot: 'bg-blossom-500',
   },
   completed: {
     label: 'Tamamlandı',
@@ -42,8 +42,8 @@ export const STATUS_META: Record<RequestStatus, StatusMeta> = {
   cancelled: {
     label: 'İptal edildi',
     clientLabel: 'İptal edilenler',
-    badge: 'bg-rose-50 text-rose-700 ring-rose-200',
-    dot: 'bg-rose-500',
+    badge: 'bg-slate-100 text-slate-500 ring-slate-300',
+    dot: 'bg-slate-400',
   },
 };
 
@@ -70,10 +70,10 @@ export function statusLabel(status: RequestStatus): string {
 }
 
 export const PRIORITY_META: Record<RequestPriority, { label: string; badge: string }> = {
-  low: { label: 'Düşük', badge: 'bg-slate-100 text-slate-600 ring-slate-200' },
-  normal: { label: 'Normal', badge: 'bg-slate-100 text-slate-700 ring-slate-200' },
-  high: { label: 'Yüksek', badge: 'bg-orange-50 text-orange-700 ring-orange-200' },
-  urgent: { label: 'Acil', badge: 'bg-red-50 text-red-700 ring-red-200' },
+  low: { label: 'Düşük', badge: 'bg-surface-100 text-slate-500 ring-surface-300' },
+  normal: { label: 'Normal', badge: 'bg-surface-100 text-slate-600 ring-surface-300' },
+  high: { label: 'Yüksek', badge: 'bg-peach-50 text-peach-700 ring-peach-200' },
+  urgent: { label: 'Acil', badge: 'bg-blossom-100 text-blossom-700 ring-blossom-300' },
 };
 
 const EVENT_LABELS: Record<string, string> = {
@@ -88,6 +88,7 @@ const EVENT_LABELS: Record<string, string> = {
   field_flagged: 'Eksik alan işaretlendi',
   updated: 'Talep güncellendi',
   assigned: 'Sorumlu atandı',
+  deadline_set: 'Teslim tarihi belirlendi',
 };
 
 export function eventLabel(type: string): string {

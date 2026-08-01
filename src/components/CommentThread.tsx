@@ -12,6 +12,7 @@ export interface CommentItem {
   is_internal: boolean;
   created_at: string;
   author_name: string;
+  author_team: string | null;
   author_role: 'agency' | 'client' | null;
 }
 
@@ -62,21 +63,24 @@ export default function CommentThread({
             <li
               key={comment.id}
               className={cn(
-                'rounded-lg border p-3',
+                'rounded-2xl border p-3.5',
                 comment.is_internal
-                  ? 'border-amber-200 bg-amber-50'
+                  ? 'border-peach-200 bg-peach-50'
                   : comment.author_role === 'agency'
                     ? 'border-brand-100 bg-brand-50/60'
                     : 'border-surface-200 bg-white'
               )}
             >
               <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                <span className="font-medium text-slate-700">{comment.author_name}</span>
+                <span className="font-semibold text-slate-700">{comment.author_name}</span>
+                {comment.author_team && (
+                  <span className="text-slate-400">{comment.author_team}</span>
+                )}
                 {comment.author_role === 'agency' && !comment.is_internal && (
                   <span className="badge bg-brand-50 text-brand-700 ring-brand-200">Ajans</span>
                 )}
                 {comment.is_internal && (
-                  <span className="badge bg-amber-100 text-amber-800 ring-amber-300">
+                  <span className="badge bg-peach-100 text-peach-800 ring-peach-300">
                     <Lock className="h-3 w-3" />
                     İç not · müşteri göremez
                   </span>
@@ -104,7 +108,7 @@ export default function CommentThread({
               <label className="flex items-center gap-2 text-sm text-slate-600">
                 <input
                   type="checkbox"
-                  className="h-4 w-4 rounded border-surface-300 text-amber-600 focus:ring-amber-500"
+                  className="h-4 w-4 rounded border-surface-300 text-peach-600 focus:ring-peach-500"
                   checked={internal}
                   onChange={(e) => setInternal(e.target.checked)}
                 />

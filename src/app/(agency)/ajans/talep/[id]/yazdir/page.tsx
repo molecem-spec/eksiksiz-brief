@@ -1,29 +1,25 @@
 import { notFound } from 'next/navigation';
 import AnswerSections from '@/components/AnswerSections';
 import { requireAgency } from '@/lib/auth';
-import { projectTypeLabel } from '@/lib/brief';
 import { loadRequestDetail } from '@/lib/queries';
+import { loadSettings } from '@/lib/settings';
 import { PRIORITY_META, statusLabel } from '@/lib/status';
 import { formatDate, formatDateTime } from '@/lib/utils';
 import type { Answers } from '@/types/db';
 import PrintButton from './PrintButton';
 
-export const metadata = { title: 'Talep dökümü · Eksiksiz Brif' };
+export const metadata = { title: 'Talep dökümü' };
 export const dynamic = 'force-dynamic';
 
 /** Yazdirma / PDF ciktisi. Tarayicinin "PDF olarak kaydet" secenegi kullanilir. */
-export default async function PrintRequestPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function PrintRequestPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   await requireAgency();
 
-  const detail = await loadRequestDetail(id);
+  const [detail, settings] = await Promise.all([loadRequestDetail(id), loadSettings()]);
   if (!detail) notFound();
 
-  const { request, brand, company, creator, files, comments } = detail;
+  const { request, brand, creator, files, comments } = detail;
   const publicComments = comments.filter((comment) => !comment.is_internal);
 
   return (
@@ -31,30 +27,31 @@ export default async function PrintRequestPage({
       <PrintButton />
 
       <header className="border-b border-surface-300 pb-4">
-        <p className="text-xs text-slate-500">Eksiksiz Brif · Talep no #{request.ref}</p>
-        <h1 className="mt-1 text-2xl font-semibold text-slate-900">
+        <p className="text-xs text-slate-500">
+          {settings.app_name} · Talep no #{request.ref}
+        </p>
+        <h1 className="mt-1 text-2xl font-bold text-slate-900">
           {request.title || 'İsimsiz talep'}
         </h1>
-        <p className="mt-1 text-sm text-slate-600">
-          {company?.name} · {brand?.name} · {projectTypeLabel(request.project_type)}
-        </p>
+        <p className="mt-1 text-sm text-slate-600">{brand?.name}</p>
       </header>
 
       <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
         <Item label="Durum" value={statusLabel(request.status)} />
         <Item label="Öncelik" value={PRIORITY_META[request.priority].label} />
-        <Item label="Talebi açan" value={creator?.full_name || creator?.email || '—'} />
-        <Item label="Oluşturulma" value={formatDate(request.created_at)} />
-        <Item label="Ajansa iletilme" value={formatDateTime(request.submitted_at)} />
+        <Item
+          label="Talebi açan"
+          value={creator?.full_name || creator?.email || '—'}
+        />
+        <Item
+          label="Talep tarihi"
+          value={formatDateTime(request.submitted_at ?? request.created_at)}
+        />
         <Item label="Yayın / etkinlik tarihi" value={formatDate(request.use_date)} />
-        <Item label="İstenen teslim tarihi" value={formatDate(request.deadline)} />
+        <Item label="İç teslim tarihi" value={formatDate(request.deadline)} />
       </dl>
 
-      <AnswerSections
-        projectType={request.project_type}
-        answers={(request.answers ?? {}) as Answers}
-        showEmpty={false}
-      />
+      <AnswerSections answers={(request.answers ?? {}) as Answers} showEmpty={false} />
 
       <section>
         <h3 className="text-sm font-semibold text-slate-800">Yüklenen dosyalar</h3>
@@ -76,7 +73,7 @@ export default async function PrintRequestPage({
           <h3 className="text-sm font-semibold text-slate-800">Yazışmalar</h3>
           <ul className="mt-2 space-y-2">
             {publicComments.map((comment) => (
-              <li key={comment.id} className="rounded border border-surface-200 p-2 text-sm">
+              <li key={comment.id} className="rounded-xl border border-surface-200 p-2.5 text-sm">
                 <p className="text-xs text-slate-500">
                   {comment.author_name} · {formatDateTime(comment.created_at)}
                 </p>
