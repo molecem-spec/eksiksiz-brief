@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { KeyRound, LogOut } from 'lucide-react';
 import type { Profile } from '@/types/db';
 import NavLink from './NavLink';
+import NotificationBell from './NotificationBell';
 
 interface NavItem {
   href: string;
@@ -57,6 +58,9 @@ export default function AppShell({ profile, appName, subline, nav, children }: P
                 </p>
               )}
             </div>
+
+            {/* Bildirimler su an ajans tarafina uretiliyor. */}
+            {isAgency && <NotificationBell userId={profile.id} />}
 
             <Link href="/sifre" className="btn-ghost px-2" title="Şifre değiştir">
               <KeyRound className="h-4 w-4" />
