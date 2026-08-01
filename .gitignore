@@ -11,3 +11,7 @@ npm-debug.log*
 .vercel
 next-env.d.ts
 tsconfig.tsbuildinfo
+
+# Supabase CLI'nin yerel baglanti bilgileri
+supabase/.temp/
+supabase/.branches/

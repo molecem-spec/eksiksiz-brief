@@ -20,16 +20,27 @@ Tailwind CSS · Vercel
 
 ### 1. Supabase projesi
 
-**SQL Editor**'de sırasıyla şu dosyaları çalıştırın:
+Migration'lar Supabase CLI ile uygulanır:
 
-1. `supabase/migrations/001_init.sql`
-2. `supabase/migrations/002_storage_and_guards.sql`
-3. `supabase/migrations/003_single_level_brands.sql`
+```bash
+supabase link --project-ref <proje-ref>
+supabase db push
+```
 
-> 003, "müşteri şirketi + marka" olan iki seviyeli yapıyı tek seviyeye indirir.
-> Daha önce 001–002 ile kurulum yaptıysanız 003'ü çalıştırmanız yeterli;
-> `companies` tablosu silinir, markalar ve talepler korunur. Aynı adda birden
-> fazla marka varsa migration durur — önce markaları birleştirin.
+Dosyalar sırasıyla:
+
+1. `001_init.sql` — tablolar, RLS, fonksiyonlar
+2. `002_storage_and_guards.sql` — dosya deposu, kolon korumaları
+3. `003_single_level_brands.sql` — tek seviye marka yapısına geçiş, portal ayarları
+4. `004_ensure_policies.sql` — tüm RLS politikalarını garantiye alan güvenlik tabanı
+
+> SQL editöründen elle çalıştırmak yerine `db push` kullanın. Elle çalıştırmada
+> script yarıda kalırsa bir kısmı uygulanır ve fark edilmez; `db push` her
+> dosyayı transaction içinde çalıştırır ve geçmişi kaydeder.
+>
+> Daha önce elle çalıştırdıysanız, uygulanmış olanları
+> `supabase migration repair --status applied 001 002` ile işaretleyip
+> `db push` yapın.
 
 ### 2. Kayıt olmayı kapatın
 
