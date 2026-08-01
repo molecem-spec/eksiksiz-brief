@@ -25,6 +25,30 @@ async function requireAgencyActor() {
   return { supabase, profile };
 }
 
+const SERVICE_KEY_HINT =
+  'Supabase → Project Settings → API Keys bölümünden service_role (secret) anahtarını kopyalayıp Vercel ortam değişkenlerine ekleyin ve yeniden deploy edin.';
+
+/** Yonetici istemcisini kurar; kuramazsa sebebi metin olarak dondurur. */
+function adminClientOrError() {
+  try {
+    return { admin: createAdminClient(), error: null as string | null };
+  } catch (err) {
+    return {
+      admin: null,
+      error: err instanceof Error ? err.message : SERVICE_KEY_HINT,
+    };
+  }
+}
+
+/** Supabase admin API hatalarini anlasilir mesaja cevirir. */
+function adminApiError(message: string): string {
+  const lower = message.toLowerCase();
+  if (lower.includes('user not allowed') || lower.includes('not_admin')) {
+    return `Supabase bu işlemi reddetti ("User not allowed"). Bu hata, service_role yerine anon/publishable anahtarın kullanıldığı anlamına gelir. ${SERVICE_KEY_HINT}`;
+  }
+  return message;
+}
+
 // ---------------------------------------------------------------------------
 // Markalar
 // ---------------------------------------------------------------------------
@@ -145,15 +169,8 @@ export async function createUser(input: {
   if (!email) return { ok: false, error: 'E-posta gerekli.' };
   if (input.password.length < 8) return { ok: false, error: 'Şifre en az 8 karakter olmalı.' };
 
-  let admin;
-  try {
-    admin = createAdminClient();
-  } catch {
-    return {
-      ok: false,
-      error: 'SUPABASE_SERVICE_ROLE_KEY tanımlı değil; kullanıcı oluşturulamıyor.',
-    };
-  }
+  const { admin, error: adminError } = adminClientOrError();
+  if (!admin) return { ok: false, error: adminError! };
 
   const { data, error } = await admin.auth.admin.createUser({
     email,
@@ -176,7 +193,7 @@ export async function createUser(input: {
     if (lower.includes('password')) {
       return { ok: false, error: `Şifre kabul edilmedi: ${message}` };
     }
-    return { ok: false, error: `Kullanıcı oluşturulamadı: ${message}` };
+    return { ok: false, error: `Kullanıcı oluşturulamadı: ${adminApiError(message)}` };
   }
 
   const userId = data.user?.id;
@@ -229,16 +246,12 @@ export async function deleteUserByEmail(email: string): Promise<ActionResult> {
   const { profile } = await requireAgencyActor();
   if (!profile) return { ok: false, error: 'Yetkiniz yok.' };
 
-  let admin;
-  try {
-    admin = createAdminClient();
-  } catch {
-    return { ok: false, error: 'SUPABASE_SERVICE_ROLE_KEY tanımlı değil.' };
-  }
+  const { admin, error: adminError } = adminClientOrError();
+  if (!admin) return { ok: false, error: adminError! };
 
   const target = email.trim().toLowerCase();
   const { data, error } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-  if (error) return { ok: false, error: `Kullanıcılar okunamadı: ${error.message}` };
+  if (error) return { ok: false, error: `Kullanıcılar okunamadı: ${adminApiError(error.message)}` };
 
   const found = data.users.find((user) => (user.email ?? '').toLowerCase() === target);
   if (!found) return { ok: false, error: 'Bu e-postayla bir hesap bulunamadı.' };
@@ -317,15 +330,11 @@ export async function resetUserPassword(
   if (!profile) return { ok: false, error: 'Yetkiniz yok.' };
   if (password.length < 8) return { ok: false, error: 'Şifre en az 8 karakter olmalı.' };
 
-  let admin;
-  try {
-    admin = createAdminClient();
-  } catch {
-    return { ok: false, error: 'SUPABASE_SERVICE_ROLE_KEY tanımlı değil.' };
-  }
+  const { admin, error: adminError } = adminClientOrError();
+  if (!admin) return { ok: false, error: adminError! };
 
   const { error } = await admin.auth.admin.updateUserById(userId, { password });
-  if (error) return { ok: false, error: `Şifre değiştirilemedi: ${error.message}` };
+  if (error) return { ok: false, error: `Şifre değiştirilemedi: ${adminApiError(error.message)}` };
 
   return { ok: true };
 }
@@ -336,15 +345,11 @@ export async function deleteUser(userId: string): Promise<ActionResult> {
   if (!profile) return { ok: false, error: 'Yetkiniz yok.' };
   if (userId === profile.id) return { ok: false, error: 'Kendi hesabınızı silemezsiniz.' };
 
-  let admin;
-  try {
-    admin = createAdminClient();
-  } catch {
-    return { ok: false, error: 'SUPABASE_SERVICE_ROLE_KEY tanımlı değil.' };
-  }
+  const { admin, error: adminError } = adminClientOrError();
+  if (!admin) return { ok: false, error: adminError! };
 
   const { error } = await admin.auth.admin.deleteUser(userId);
-  if (error) return { ok: false, error: `Silinemedi: ${error.message}` };
+  if (error) return { ok: false, error: `Silinemedi: ${adminApiError(error.message)}` };
 
   revalidatePath('/ajans/kullanicilar');
   return { ok: true };
