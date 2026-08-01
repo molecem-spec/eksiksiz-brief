@@ -165,8 +165,16 @@ export async function createUser(input: {
 
   if (error) {
     const message = String(error.message ?? '');
-    if (message.toLowerCase().includes('already been registered')) {
-      return { ok: false, error: 'Bu e-posta zaten kayıtlı.' };
+    const lower = message.toLowerCase();
+    if (lower.includes('already been registered') || lower.includes('already exists')) {
+      return {
+        ok: false,
+        error:
+          'Bu e-posta zaten kayıtlı. Kullanıcı listede görünmüyorsa yarım kalmış bir kayıt var demektir; aşağıdaki listeden silip yeniden deneyin.',
+      };
+    }
+    if (lower.includes('password')) {
+      return { ok: false, error: `Şifre kabul edilmedi: ${message}` };
     }
     return { ok: false, error: `Kullanıcı oluşturulamadı: ${message}` };
   }
@@ -174,8 +182,10 @@ export async function createUser(input: {
   const userId = data.user?.id;
   if (!userId) return { ok: false, error: 'Kullanıcı oluşturuldu ancak kimlik alınamadı.' };
 
-  // Tetikleyici profili aciyor; rol ve ekip bilgisini burada kesinlestiriyoruz.
-  await admin.from('profiles').upsert(
+  // Buradan sonrasi basarisiz olursa auth kaydi geri alinir; aksi halde
+  // listede gorunmeyen ama e-postasi "zaten kayitli" diyen hayalet hesaplar
+  // olusuyor.
+  const { error: profileError } = await admin.from('profiles').upsert(
     {
       id: userId,
       email,
@@ -186,14 +196,58 @@ export async function createUser(input: {
     { onConflict: 'id' }
   );
 
+  if (profileError) {
+    await admin.auth.admin.deleteUser(userId);
+    return { ok: false, error: `Profil kaydedilemedi: ${profileError.message}` };
+  }
+
   if (input.brandIds.length > 0) {
-    await supabase
+    const { error: brandError } = await supabase
       .from('user_brands')
       .insert(input.brandIds.map((brandId) => ({ user_id: userId, brand_id: brandId })));
+
+    if (brandError) {
+      // Hesap kullanilabilir durumda; yalnizca marka atamasi yapilamadi.
+      revalidatePath('/ajans/kullanicilar');
+      return {
+        ok: false,
+        error: `Kullanıcı oluşturuldu ancak markalar atanamadı: ${brandError.message}. Listeden "Düzenle" ile markaları seçin.`,
+      };
+    }
   }
 
   revalidatePath('/ajans/kullanicilar');
   revalidatePath('/ajans/markalar');
+  return { ok: true };
+}
+
+/**
+ * auth.users icinde olup profiles kaydi olmayan ya da listede gorunmeyen
+ * hesaplari e-postasindan bulup siler. Yarim kalmis kayitlari temizlemek icin.
+ */
+export async function deleteUserByEmail(email: string): Promise<ActionResult> {
+  const { profile } = await requireAgencyActor();
+  if (!profile) return { ok: false, error: 'Yetkiniz yok.' };
+
+  let admin;
+  try {
+    admin = createAdminClient();
+  } catch {
+    return { ok: false, error: 'SUPABASE_SERVICE_ROLE_KEY tanımlı değil.' };
+  }
+
+  const target = email.trim().toLowerCase();
+  const { data, error } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+  if (error) return { ok: false, error: `Kullanıcılar okunamadı: ${error.message}` };
+
+  const found = data.users.find((user) => (user.email ?? '').toLowerCase() === target);
+  if (!found) return { ok: false, error: 'Bu e-postayla bir hesap bulunamadı.' };
+  if (found.id === profile.id) return { ok: false, error: 'Kendi hesabınızı silemezsiniz.' };
+
+  const { error: deleteError } = await admin.auth.admin.deleteUser(found.id);
+  if (deleteError) return { ok: false, error: `Silinemedi: ${deleteError.message}` };
+
+  revalidatePath('/ajans/kullanicilar');
   return { ok: true };
 }
 

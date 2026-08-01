@@ -6,6 +6,7 @@ import { Check, Copy, KeyRound, Loader2, Trash2, UserPlus } from 'lucide-react';
 import {
   createUser,
   deleteUser,
+  deleteUserByEmail,
   resetUserPassword,
   setUserActive,
   setUserBrands,
@@ -41,6 +42,8 @@ export default function UserManager({ currentUserId, users, brands, brandsByUser
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
+  /** "Zaten kayıtlı" hatasında temizleme düğmesi için tutulan e-posta */
+  const [orphanEmail, setOrphanEmail] = useState<string | null>(null);
 
   const [showNew, setShowNew] = useState(false);
   const [draft, setDraft] = useState(EMPTY_DRAFT);
@@ -65,10 +68,20 @@ export default function UserManager({ currentUserId, users, brands, brandsByUser
   async function handleCreate() {
     setBusy(true);
     setMessage(null);
+    setOrphanEmail(null);
+    const attemptedEmail = draft.email.trim().toLowerCase();
     const result = await createUser(draft);
     setBusy(false);
     if (!result.ok) {
       setMessage({ tone: 'error', text: result.error ?? 'Oluşturulamadı.' });
+      // Listede olmayan ama auth tarafinda duran bir kayit varsa temizleme
+      // secenegi sunulur.
+      if (
+        result.error?.includes('zaten kayıtlı') &&
+        !users.some((user) => user.email.toLowerCase() === attemptedEmail)
+      ) {
+        setOrphanEmail(attemptedEmail);
+      }
       return;
     }
     setCreated({ email: draft.email.trim().toLowerCase(), password: draft.password });
@@ -279,7 +292,7 @@ export default function UserManager({ currentUserId, users, brands, brandsByUser
       )}
 
       {message && (
-        <p
+        <div
           className={cn(
             'rounded-xl px-3 py-2 text-sm ring-1 ring-inset',
             message.tone === 'ok'
@@ -287,8 +300,32 @@ export default function UserManager({ currentUserId, users, brands, brandsByUser
               : 'bg-blossom-50 text-blossom-700 ring-blossom-200'
           )}
         >
-          {message.text}
-        </p>
+          <p>{message.text}</p>
+
+          {orphanEmail && (
+            <button
+              type="button"
+              className="btn-danger mt-2 text-xs"
+              disabled={busy}
+              onClick={async () => {
+                if (!confirm(`${orphanEmail} hesabı tamamen silinsin mi?`)) return;
+                setBusy(true);
+                const result = await deleteUserByEmail(orphanEmail);
+                setBusy(false);
+                setOrphanEmail(null);
+                setMessage(
+                  result.ok
+                    ? { tone: 'ok', text: 'Yarım kalmış kayıt silindi. Yeniden deneyebilirsiniz.' }
+                    : { tone: 'error', text: result.error ?? 'Silinemedi.' }
+                );
+                router.refresh();
+              }}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              {orphanEmail} kaydını temizle
+            </button>
+          )}
+        </div>
       )}
 
       <div className="overflow-x-auto rounded-2xl border border-surface-200 bg-white shadow-card">
