@@ -66,9 +66,21 @@ module.exports = {
       },
       animation: {
         'fade-in': 'fadeIn 0.2s ease-out',
+        // Giris ekranindaki dekoratif renk lekeleri icin yavas suzulme
+        float: 'float 11s ease-in-out infinite',
+        'float-slow': 'float 16s ease-in-out infinite',
+        'rise-in': 'riseIn 0.5s cubic-bezier(0.22,1,0.36,1) both',
       },
       keyframes: {
         fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+        float: {
+          '0%, 100%': { transform: 'translate3d(0,0,0)' },
+          '50%': { transform: 'translate3d(0,-18px,0)' },
+        },
+        riseIn: {
+          '0%': { opacity: '0', transform: 'translateY(14px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
       },
     },
   },

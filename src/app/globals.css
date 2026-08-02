@@ -56,6 +56,15 @@
   }
 }
 
+/* Hareket azaltma tercihi olan kullanicilarda dekoratif animasyonlar durur. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .animate-float-slow,
+  .animate-rise-in {
+    animation: none !important;
+  }
+}
+
 /* Yazdirma / PDF ciktisi */
 @media print {
   .no-print {
