@@ -15,38 +15,52 @@ export default async function LoginPage() {
     .filter(Boolean);
 
   return (
-    <main className="min-h-screen lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] xl:grid-cols-[minmax(0,1fr)_minmax(0,30rem)]">
+    <main className="min-h-screen lg:grid lg:grid-cols-2">
       {/*
-        Gorsel paneli. Yuklenen afis zaten renkli ve kendi tipografisini
-        tasiyor; cevresi bilerek sessiz ve koyu tutuldu ki tek renk kaynagi
-        gorselin kendisi olsun. Degrade, parilti veya bulanik leke yok.
+        Gorsel paneli. Afis kendi tipografisini tasidigi icin kirpilmiyor ve
+        uzerine yazi bindirilmiyor; karakteri arkasindaki yumusak renk
+        lekelerinden geliyor.
       */}
-      <section className="relative flex items-center justify-center overflow-hidden bg-brand-950 px-6 py-12 sm:px-10 lg:px-16 lg:py-16">
-        {/* Eserin uzerine dusen isik: duz zeminde asili degil, aydinlatilmis
-            hissi versin diye cok hafif bir radyal parlaklik. */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_50%_at_50%_45%,rgba(255,255,255,0.09),transparent_70%)]"
-        />
+      <section className="relative flex items-center justify-center overflow-hidden bg-soft-gradient p-6 sm:p-10 lg:p-12">
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div className="absolute -left-20 -top-24 h-72 w-72 animate-float rounded-full bg-blossom-200/55 blur-3xl" />
+          <div className="absolute -bottom-24 -right-16 h-80 w-80 animate-float-slow rounded-full bg-peach-200/55 blur-3xl" />
+          <div className="absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-200/45 blur-3xl" />
+        </div>
 
-        {imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={imageUrl}
-            alt=""
-            className="relative max-h-[26vh] w-auto max-w-full rounded-xl object-contain shadow-[0_40px_80px_-30px_rgba(0,0,0,0.8)] ring-1 ring-white/10 sm:max-h-[32vh] lg:max-h-[80vh]"
+        <div className="relative animate-rise-in">
+          <div
+            aria-hidden
+            className="absolute -inset-4 rounded-[2.25rem] bg-brand-gradient opacity-25 blur-2xl"
           />
-        ) : (
-          <span className="relative text-5xl font-semibold tracking-tight text-white/25 lg:text-7xl">
-            18.12
-          </span>
-        )}
+
+          {imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={imageUrl}
+              alt=""
+              className="relative max-h-[28vh] w-auto max-w-full rounded-2xl object-contain shadow-card-hover ring-1 ring-white/70 sm:max-h-[34vh] lg:max-h-[80vh] lg:rounded-3xl"
+            />
+          ) : (
+            <div className="relative flex h-44 w-full max-w-md items-center justify-center rounded-2xl bg-brand-gradient shadow-glow lg:h-96 lg:rounded-3xl">
+              <span className="text-4xl font-bold tracking-tight text-white/90 lg:text-6xl">
+                18.12
+              </span>
+            </div>
+          )}
+        </div>
       </section>
 
-      {/* Icerik ve giris */}
-      <section className="flex items-center bg-white px-6 py-12 sm:px-10 lg:px-14 lg:py-16">
-        <div className="w-full max-w-[26rem]">
-          <h1 className="text-pretty text-[2.125rem] font-semibold leading-[1.05] tracking-[-0.025em] text-slate-900 lg:text-[2.5rem]">
+      {/* Metin + giris formu */}
+      <section className="relative flex items-center justify-center overflow-hidden bg-white px-6 py-10 sm:px-10 lg:px-16 lg:py-12">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-brand-100/60 blur-3xl"
+        />
+
+        <div className="relative w-full max-w-[26rem]">
+          {/* Baslikta degrade yok: sayfadaki tek vurgu giris dugmesi. */}
+          <h1 className="text-pretty text-[2.125rem] font-semibold leading-[1.08] tracking-[-0.025em] text-slate-900 lg:text-[2.5rem]">
             {settings.login_title}
           </h1>
 
@@ -58,14 +72,13 @@ export default async function LoginPage() {
             </div>
           )}
 
-          {/* Ince ayrac: kart yerine tek bir cizgi yeterli. */}
-          <hr className="my-9 border-surface-200" />
+          <div className="mt-7 rounded-2xl border border-surface-200 bg-white p-6 shadow-card-hover">
+            <Suspense fallback={<div className="h-56" />}>
+              <LoginForm />
+            </Suspense>
+          </div>
 
-          <Suspense fallback={<div className="h-56" />}>
-            <LoginForm />
-          </Suspense>
-
-          <p className="mt-8 text-[0.8125rem] leading-relaxed text-slate-400">
+          <p className="mt-5 text-[0.8125rem] leading-relaxed text-slate-400">
             Hesaplar ajans tarafından tanımlanır. Erişiminizde bir sorun varsa ajans ekibiyle
             iletişime geçin.
           </p>
