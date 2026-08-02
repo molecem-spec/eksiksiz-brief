@@ -19,6 +19,9 @@ module.exports = {
           700: '#663fbb',
           800: '#553599',
           900: '#472e7c',
+          // Giris ekraninin derin zemini: renk yalnizca gorselden gelsin diye
+          // cevre sessiz tutuluyor.
+          950: '#241a3f',
         },
         // Ikincil: pastel pembe
         blossom: {

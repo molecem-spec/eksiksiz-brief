@@ -2,103 +2,59 @@
 
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { KeyRound, Loader2, Mail } from 'lucide-react';
+import { AlertCircle, ArrowRight, Loader2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-
-type Mode = 'password' | 'magic';
 
 const ERROR_MESSAGES: Record<string, string> = {
   profil: 'Hesabınız henüz tanımlanmamış. Lütfen ajans ekibiyle iletişime geçin.',
   pasif: 'Hesabınız pasif durumda. Lütfen ajans ekibiyle iletişime geçin.',
-  baglanti: 'Giriş bağlantısı geçersiz veya süresi dolmuş. Yeniden deneyin.',
+  baglanti: 'Giriş bağlantısı geçersiz veya süresi dolmuş.',
 };
 
 export default function LoginForm() {
   const params = useSearchParams();
   const next = params.get('devam') ?? '/';
-  const initialError = ERROR_MESSAGES[params.get('hata') ?? ''] ?? null;
 
-  const [mode, setMode] = useState<Mode>('password');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
-  const [sent, setSent] = useState(false);
-  const [error, setError] = useState<string | null>(initialError);
+  const [error, setError] = useState<string | null>(
+    ERROR_MESSAGES[params.get('hata') ?? ''] ?? null
+  );
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setBusy(true);
     setError(null);
-    const supabase = createClient();
 
     try {
-      if (mode === 'password') {
-        const { error: authError } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
-          password,
-        });
-        if (authError) throw authError;
-        window.location.href = next;
-      } else {
-        const origin =
-          process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') ?? window.location.origin;
-        const { error: authError } = await supabase.auth.signInWithOtp({
-          email: email.trim(),
-          options: {
-            // Hesaplar yalnizca ajans panelinden acilir; giris baglantisi yeni
-            // kullanici yaratmasin.
-            shouldCreateUser: false,
-            emailRedirectTo: `${origin}/auth/callback?devam=${encodeURIComponent(next)}`,
-          },
-        });
-        if (authError) throw authError;
-        setSent(true);
-      }
+      const supabase = createClient();
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+      if (authError) throw authError;
+      window.location.href = next;
     } catch (err: any) {
-      const message = String(err?.message ?? '');
-      if (message.includes('Invalid login credentials')) {
+      const message = String(err?.message ?? '').toLowerCase();
+      if (message.includes('invalid login credentials')) {
         setError('E-posta veya şifre hatalı.');
-      } else if (message.includes('Signups not allowed') || message.includes('User not found')) {
-        setError('Bu e-posta adresi sistemde tanımlı değil.');
-      } else if (message.toLowerCase().includes('rate')) {
+      } else if (message.includes('rate')) {
         setError('Çok fazla deneme yapıldı. Birkaç dakika sonra tekrar deneyin.');
       } else {
         setError('Giriş yapılamadı. Lütfen tekrar deneyin.');
       }
-    } finally {
       setBusy(false);
     }
   }
 
-  if (sent) {
-    return (
-      <div className="text-center">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-50">
-          <Mail className="h-6 w-6 text-brand-600" />
-        </div>
-        <h3 className="mt-4 text-base font-semibold text-slate-900">Giriş bağlantısı gönderildi</h3>
-        <p className="mt-2 text-sm text-slate-600">
-          <span className="font-medium text-slate-800">{email}</span> adresine tek kullanımlık bir
-          giriş bağlantısı yolladık.
-        </p>
-        <button
-          type="button"
-          className="btn-ghost mt-4"
-          onClick={() => {
-            setSent(false);
-            setError(null);
-          }}
-        >
-          Geri dön
-        </button>
-      </div>
-    );
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <label className="label" htmlFor="email">
+        <label
+          className="block text-[0.8125rem] font-medium text-slate-700"
+          htmlFor="email"
+        >
           E-posta adresi
         </label>
         <input
@@ -106,58 +62,52 @@ export default function LoginForm() {
           type="email"
           required
           autoComplete="email"
-          className="input mt-1.5"
+          autoFocus
+          className="mt-2 h-12 w-full rounded-xl border border-surface-300 bg-white px-4 text-[0.9375rem] text-slate-900 transition-shadow placeholder:text-slate-400 focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-500/15"
           placeholder="ad@marka.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
       </div>
 
-      {mode === 'password' && (
-        <div>
-          <label className="label" htmlFor="password">
-            Şifre
-          </label>
-          <input
-            id="password"
-            type="password"
-            required
-            autoComplete="current-password"
-            className="input mt-1.5"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
-      )}
+      <div>
+        <label
+          className="block text-[0.8125rem] font-medium text-slate-700"
+          htmlFor="password"
+        >
+          Şifre
+        </label>
+        <input
+          id="password"
+          type="password"
+          required
+          autoComplete="current-password"
+          className="mt-2 h-12 w-full rounded-xl border border-surface-300 bg-white px-4 text-[0.9375rem] text-slate-900 transition-shadow focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-500/15"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+      </div>
 
       {error && (
-        <p className="rounded-xl bg-blossom-50 px-3 py-2 text-sm text-blossom-700 ring-1 ring-inset ring-blossom-200">
+        <p className="flex items-start gap-2 text-[0.8125rem] leading-relaxed text-blossom-600">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           {error}
         </p>
       )}
 
-      <button type="submit" className="btn-primary w-full" disabled={busy}>
+      <button
+        type="submit"
+        className="group flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-gradient text-[0.9375rem] font-semibold text-white transition-all hover:brightness-105 active:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
+        disabled={busy}
+      >
         {busy ? (
           <Loader2 className="h-4 w-4 animate-spin" />
-        ) : mode === 'password' ? (
-          <KeyRound className="h-4 w-4" />
         ) : (
-          <Mail className="h-4 w-4" />
+          <>
+            Giriş yap
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+          </>
         )}
-        {mode === 'password' ? 'Giriş yap' : 'Giriş bağlantısı gönder'}
-      </button>
-
-      <button
-        type="button"
-        className="w-full text-center text-sm font-medium text-slate-500 hover:text-brand-700"
-        onClick={() => {
-          setMode(mode === 'password' ? 'magic' : 'password');
-          setError(null);
-        }}
-      >
-        {mode === 'password'
-          ? 'Şifremi unuttum — e-posta ile giriş bağlantısı al'
-          : 'Şifreyle giriş yap'}
       </button>
     </form>
   );
