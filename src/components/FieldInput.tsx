@@ -31,7 +31,7 @@ export default function FieldInput({
       <label
         htmlFor={id}
         className={cn(
-          'flex cursor-pointer items-start gap-3 rounded-lg border border-surface-200 bg-surface-50 p-3',
+          'flex cursor-pointer items-start gap-3 rounded-lg border border-surface-200 bg-surface-50 p-3 sm:col-span-2',
           disabled && 'cursor-not-allowed opacity-60'
         )}
       >

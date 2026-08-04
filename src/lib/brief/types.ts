@@ -42,11 +42,15 @@ export interface ProjectType {
   sections: Section[];
 }
 
-/** Cevabin dolu sayilip sayilmadigi */
+/**
+ * Cevabin dolu sayilip sayilmadigi.
+ * Isaretlenmemis kutu "bos" kabul edilir; boylece dokumlarda ve detay
+ * ekraninda "Hayir" satirlari gereksiz yer kaplamiyor.
+ */
 export function hasValue(value: Answers[string]): boolean {
   if (value === null || value === undefined) return false;
   if (Array.isArray(value)) return value.length > 0;
-  if (typeof value === 'boolean') return true;
+  if (typeof value === 'boolean') return value;
   return String(value).trim().length > 0;
 }
 

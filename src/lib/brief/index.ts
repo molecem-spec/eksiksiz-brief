@@ -1,7 +1,10 @@
 import type { Answers, RequestPriority } from '@/types/db';
 import {
   BRIEF_SECTION,
+  CONTENT_SECTION,
+  DETAIL_SECTION,
   EXTRA_SECTION,
+  CROSS_FIELD_RULES,
   TITLE_KEY,
   USE_DATE_KEY,
   PRIORITY_KEY,
@@ -20,11 +23,15 @@ export interface Step {
   sections: Section[];
 }
 
-/** Form adimlari. Talep turu sorulmadigi icin herkes ayni akisi gorur. */
+/** Form adimlari. Herkes ayni akisi gorur. */
 export function buildSteps(): Step[] {
   return [
     { id: 'marka', title: 'Marka', sections: [] },
-    { id: 'brif', title: 'Talep bilgileri', sections: [BRIEF_SECTION] },
+    {
+      id: 'brif',
+      title: 'Talep bilgileri',
+      sections: [BRIEF_SECTION, CONTENT_SECTION, DETAIL_SECTION],
+    },
     { id: 'ek', title: 'Ek bilgiler', sections: [EXTRA_SECTION] },
     { id: 'dosyalar', title: 'Dosyalar', sections: [] },
     { id: 'kontrol', title: 'Kontrol ve gönderim', sections: [] },
@@ -33,7 +40,7 @@ export function buildSteps(): Step[] {
 
 /** Talebin tum soru bolumleri (detay ekrani ve dokum icin) */
 export function allSections(): Section[] {
-  return [BRIEF_SECTION, EXTRA_SECTION];
+  return [BRIEF_SECTION, CONTENT_SECTION, DETAIL_SECTION, EXTRA_SECTION];
 }
 
 export interface MissingField {
@@ -42,15 +49,29 @@ export interface MissingField {
   field: Field;
 }
 
+/** Bir bolumdeki eksik zorunlu alanlar (alan bazli + capraz kurallar) */
+function missingInSection(section: Section, answers: Answers): Field[] {
+  const missing = visibleFields(section, answers).filter(
+    (field) => field.required && !hasValue(answers[field.key])
+  );
+
+  for (const rule of CROSS_FIELD_RULES) {
+    if (rule.sectionId !== section.id) continue;
+    if (rule.isSatisfied(answers)) continue;
+    // Eksik listesinde gosterilebilmesi icin alan gorunumunde temsil edilir.
+    missing.push({ key: rule.key, label: rule.label, type: 'text', required: true });
+  }
+
+  return missing;
+}
+
 /** Ajansa iletmeye engel olan bos zorunlu alanlar */
 export function missingRequired(answers: Answers): MissingField[] {
   const missing: MissingField[] = [];
   for (const step of buildSteps()) {
     for (const section of step.sections) {
-      for (const field of visibleFields(section, answers)) {
-        if (field.required && !hasValue(answers[field.key])) {
-          missing.push({ stepId: step.id, stepTitle: step.title, field });
-        }
+      for (const field of missingInSection(section, answers)) {
+        missing.push({ stepId: step.id, stepTitle: step.title, field });
       }
     }
   }
@@ -60,9 +81,7 @@ export function missingRequired(answers: Answers): MissingField[] {
 /** Bir adimda eksik zorunlu alan sayisi */
 export function stepMissingCount(step: Step, answers: Answers): number {
   return step.sections.reduce(
-    (total, section) =>
-      total +
-      visibleFields(section, answers).filter((f) => f.required && !hasValue(answers[f.key])).length,
+    (total, section) => total + missingInSection(section, answers).length,
     0
   );
 }
