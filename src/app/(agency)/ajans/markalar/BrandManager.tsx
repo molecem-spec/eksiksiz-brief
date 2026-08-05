@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, Loader2, Pencil, Plus, Tag, Users } from 'lucide-react';
+import { Check, DownloadCloud, Loader2, Pencil, Plus, Tag, Users } from 'lucide-react';
 import { createBrand, setBrandActive, setBrandUsers, updateBrand } from '@/app/actions/admin';
+import { importBrandsFromHub } from '@/app/actions/hub';
 import { cn } from '@/lib/utils';
 import type { Brand, Profile } from '@/types/db';
 
@@ -80,7 +81,39 @@ export default function BrandManager({ brands, users, usersByBrand }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex flex-wrap justify-end gap-2">
+        <button
+          type="button"
+          className="btn-secondary"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            setMessage(null);
+            const result = await importBrandsFromHub();
+            setBusy(false);
+            if (!result.ok || !result.data) {
+              setMessage({ tone: 'error', text: result.error ?? 'Markalar alınamadı.' });
+              return;
+            }
+            const { added, existing, names } = result.data;
+            setMessage({
+              tone: 'ok',
+              text:
+                added === 0
+                  ? `Hub’daki ${existing} markanın tamamı zaten tanımlı.`
+                  : `${added} marka eklendi: ${names.join(', ')}`,
+            });
+            router.refresh();
+          }}
+        >
+          {busy ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <DownloadCloud className="h-4 w-4" />
+          )}
+          Hub’dan markaları al
+        </button>
+
         <button type="button" className="btn-primary" onClick={() => setShowNew((v) => !v)}>
           <Plus className="h-4 w-4" />
           Yeni marka

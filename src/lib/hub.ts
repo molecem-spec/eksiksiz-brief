@@ -58,38 +58,75 @@ export function buildDescription(answers: Answers, briefUrl: string): string {
   return lines.join('\n').trim();
 }
 
+/**
+ * Entegrasyon uclarinin adresi.
+ * HUB_INTEGRATION_URL taban adresi tutar (…/api/entegrasyon). Eskiden tam uc
+ * adresi yaziliyordu; sonunda /brief varsa temizlenir ki iki bicim de calissin.
+ */
+function hubUrl(path: string): string | null {
+  const raw = process.env.HUB_INTEGRATION_URL?.trim();
+  if (!raw) return null;
+  const base = raw.replace(/\/+$/, '').replace(/\/brief$/, '');
+  return `${base}/${path}`;
+}
+
+async function hubFetch(
+  path: string,
+  init: RequestInit
+): Promise<{ ok: boolean; data?: any; error?: string }> {
+  const url = hubUrl(path);
+  const secret = process.env.HUB_INTEGRATION_SECRET;
+
+  if (!url || !secret) {
+    return { ok: false, error: 'Hub bağlantısı yapılandırılmamış (HUB_INTEGRATION_URL / SECRET).' };
+  }
+
+  try {
+    const response = await fetch(url, {
+      ...init,
+      headers: { 'Content-Type': 'application/json', 'x-brief-secret': secret },
+      signal: AbortSignal.timeout(10_000),
+    });
+
+    const data = await response.json().catch(() => null);
+    if (!response.ok) {
+      return { ok: false, error: data?.error ?? `Hub ${response.status} döndü.` };
+    }
+    return { ok: true, data };
+  } catch (err: any) {
+    const message =
+      err?.name === 'TimeoutError'
+        ? 'Hub yanıt vermedi (zaman aşımı).'
+        : String(err?.message ?? err);
+    return { ok: false, error: message };
+  }
+}
+
 export interface HubResult {
   ok: boolean;
   taskId?: string;
   error?: string;
 }
 
-/** Paketi Hub'a gonderir. Yapilandirma eksikse sessizce atlanir. */
+/** Talebi Hub'a gorev olarak gonderir. */
 export async function sendToHub(payload: HubPayload): Promise<HubResult> {
-  const url = process.env.HUB_INTEGRATION_URL;
-  const secret = process.env.HUB_INTEGRATION_SECRET;
+  const result = await hubFetch('brief', { method: 'POST', body: JSON.stringify(payload) });
+  if (!result.ok) return { ok: false, error: result.error };
+  return { ok: true, taskId: result.data?.taskId };
+}
 
-  if (!url || !secret) {
-    return { ok: false, error: 'Hub aktarımı yapılandırılmamış (HUB_INTEGRATION_URL / SECRET).' };
-  }
+/** Hub'daki aktif markalari okur. Marka listesinin kaynagi Hub'dir. */
+export async function fetchHubBrands(): Promise<{
+  ok: boolean;
+  names?: string[];
+  error?: string;
+}> {
+  const result = await hubFetch('markalar', { method: 'GET' });
+  if (!result.ok) return { ok: false, error: result.error };
 
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-brief-secret': secret },
-      body: JSON.stringify(payload),
-      // Talep gonderimini bekletmemek icin makul bir ust sinir.
-      signal: AbortSignal.timeout(10_000),
-    });
+  const names = (result.data?.brands ?? [])
+    .map((b: any) => String(b?.name ?? '').trim())
+    .filter(Boolean);
 
-    const data = await response.json().catch(() => null);
-
-    if (!response.ok) {
-      return { ok: false, error: data?.error ?? `Hub ${response.status} döndü.` };
-    }
-    return { ok: true, taskId: data?.taskId };
-  } catch (err: any) {
-    const message = err?.name === 'TimeoutError' ? 'Hub yanıt vermedi (zaman aşımı).' : String(err?.message ?? err);
-    return { ok: false, error: message };
-  }
+  return { ok: true, names };
 }
