@@ -54,6 +54,10 @@ export interface BriefRequest {
   completed_at: string | null;
   created_at: string;
   updated_at: string;
+  /** 18.12 Art Hub'da oluşan görevin kimliği */
+  hub_task_id: string | null;
+  hub_synced_at: string | null;
+  hub_error: string | null;
 }
 
 export interface RequestFile {

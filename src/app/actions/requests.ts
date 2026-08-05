@@ -134,6 +134,15 @@ export async function submitRequest(requestId: string): Promise<ActionResult> {
   const { error } = await supabase.rpc('submit_request', { p_request_id: requestId });
   if (error) return { ok: false, error: error.message };
 
+  // Hub'a aktarim talebin iletilmesini engellemez: basarisiz olursa hata
+  // talebe yazilir ve ajans detay ekranindan yeniden denenebilir.
+  try {
+    const { syncRequestToHub } = await import('./hub');
+    await syncRequestToHub(requestId);
+  } catch {
+    // Aktarim yapilandirilmamis olabilir; gonderim yine de tamamlanir.
+  }
+
   revalidatePath('/panel');
   revalidatePath('/ajans');
   revalidatePath(`/talep/${requestId}`);

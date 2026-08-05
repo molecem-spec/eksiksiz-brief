@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, FileDown, FileText } from 'lucide-react';
 import CommentThread from '@/components/CommentThread';
+import HubSyncPanel from '@/components/HubSyncPanel';
 import FileUploader from '@/components/FileUploader';
 import Timeline from '@/components/Timeline';
 import { PriorityBadge, StatusBadge } from '@/components/StatusBadge';
@@ -150,6 +151,19 @@ export default async function AgencyRequestPage({ params }: { params: Promise<{ 
                     ? `${person.full_name || person.email} · ${person.team_name}`
                     : person.full_name || person.email,
                 }))}
+              />
+            </div>
+          </div>
+
+          <div className="card p-5">
+            <h2 className="section-title">18.12 Art Hub</h2>
+            <div className="mt-4">
+              <HubSyncPanel
+                requestId={request.id}
+                hubTaskId={request.hub_task_id}
+                hubSyncedAt={request.hub_synced_at}
+                hubError={request.hub_error}
+                submitted={request.status !== 'draft'}
               />
             </div>
           </div>
