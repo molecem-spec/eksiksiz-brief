@@ -22,6 +22,8 @@ export interface Field {
   required?: boolean;
   /** Formda yarim genislikte gosterilsin */
   half?: boolean;
+  /** textarea yuksekligi (satir); varsayilan 4 */
+  rows?: number;
   /** Baska bir alanin degerine bagli olarak gorunur */
   showIf?: (answers: Answers) => boolean;
 }

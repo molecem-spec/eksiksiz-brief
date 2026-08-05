@@ -14,7 +14,7 @@ import { hasValue, visibleFields, type Field, type Section } from './types';
 export * from './types';
 export * from './common';
 
-export type StepId = 'marka' | 'brif' | 'ek' | 'dosyalar' | 'kontrol';
+export type StepId = 'brif' | 'ek' | 'dosyalar' | 'kontrol';
 
 export interface Step {
   id: StepId;
@@ -23,10 +23,12 @@ export interface Step {
   sections: Section[];
 }
 
-/** Form adimlari. Herkes ayni akisi gorur. */
+/**
+ * Form adimlari. Marka adimi yok: bir musteri hesabi tek bir markaya bagli
+ * oldugu icin secim sorulmuyor.
+ */
 export function buildSteps(): Step[] {
   return [
-    { id: 'marka', title: 'Marka', sections: [] },
     {
       id: 'brif',
       title: 'Talep bilgileri',

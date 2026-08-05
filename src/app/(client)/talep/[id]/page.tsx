@@ -53,7 +53,7 @@ export default async function ClientRequestPage({
           <div className="text-sm">
             <p className="font-semibold text-emerald-900">Talebiniz ajansa iletildi 🎉</p>
             <p className="text-emerald-800">
-              Ajans ekibi talebi inceleyecek. Eksik bir bilgi olursa buradan haberdar olacaksınız.
+              Eksik bir bilgi olması durumunda 18.12 Art ekibi sizinle iletişime geçecektir.
             </p>
           </div>
         </div>

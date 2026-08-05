@@ -176,6 +176,7 @@ export const DETAIL_SECTION: Section = {
       label: 'Etkinlik içeriği / akış / detayları',
       type: 'textarea',
       required: true,
+      rows: 6,
       help: 'Etkinlikte veya kampanyada tam olarak ne olacak? Sırasıyla anlatınız. En sık eksik kalan bilgi budur.',
       placeholder:
         '19:00 karşılama ve ikram\n19:30 açılış konuşması\n20:00 canlı müzik\n21:30 çekiliş ve kapanış',

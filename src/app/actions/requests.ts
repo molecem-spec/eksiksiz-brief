@@ -27,6 +27,32 @@ async function currentProfile() {
   return { supabase, profile };
 }
 
+/**
+ * Kullanicinin markasi adina taslak acar.
+ * Bir musteri hesabi tek bir markaya bagli oldugu icin marka secimi
+ * sorulmuyor; birden fazla marka tanimliysa secim istenir.
+ */
+export async function startDraft(): Promise<
+  ActionResult<{ id?: string; needsChoice?: boolean }>
+> {
+  const { supabase, profile } = await currentProfile();
+  if (!profile) return { ok: false, error: 'Oturum bulunamadı.' };
+
+  const { data: brands } = await supabase.from('brands').select('id').eq('is_active', true);
+  const list = brands ?? [];
+
+  if (list.length === 0) {
+    return { ok: false, error: 'Size tanımlı bir marka yok. Lütfen ajans ekibiyle iletişime geçin.' };
+  }
+  if (list.length > 1) {
+    return { ok: true, data: { needsChoice: true } };
+  }
+
+  const result = await createDraft(list[0].id);
+  if (!result.ok || !result.data) return { ok: false, error: result.error };
+  return { ok: true, data: { id: result.data.id } };
+}
+
 /** Yeni taslak olusturur ve kimligini dondurur. */
 export async function createDraft(brandId: string): Promise<ActionResult<{ id: string }>> {
   const { supabase, profile } = await currentProfile();

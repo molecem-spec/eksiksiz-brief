@@ -37,7 +37,7 @@ interface Props {
 export default function BriefWizard({ request, initialAnswers, files, flags }: Props) {
   const router = useRouter();
   const [answers, setAnswers] = useState<Answers>(initialAnswers);
-  const [index, setIndex] = useState(request.status === 'info_needed' ? 1 : 0);
+  const [index, setIndex] = useState(0);
   const [busy, setBusy] = useState<'save' | 'submit' | 'delete' | null>(null);
   const [message, setMessage] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
   const [showErrors, setShowErrors] = useState(false);
@@ -130,7 +130,9 @@ export default function BriefWizard({ request, initialAnswers, files, flags }: P
           <ArrowLeft className="h-4 w-4" />
           Taleplerime dön
         </Link>
-        <span className="text-xs text-slate-400">Talep no #{request.ref}</span>
+        <span className="text-xs text-slate-400">
+          {request.brand?.name ? `${request.brand.name} · ` : ''}Talep no #{request.ref}
+        </span>
       </div>
 
       {restrictedToFlags && (
@@ -199,27 +201,19 @@ export default function BriefWizard({ request, initialAnswers, files, flags }: P
       </div>
 
       {/* Adim icerigi */}
-      <div className="card p-5 sm:p-6">
-        {step.id === 'marka' && (
-          <div>
-            <h2 className="section-title">Marka</h2>
-            <p className="mt-2 text-sm text-slate-600">
-              Bu talep <span className="font-semibold text-slate-800">{request.brand?.name}</span>{' '}
-              markası için oluşturuluyor.
-            </p>
-            <p className="mt-3 text-xs text-slate-500">
-              Markayı değiştirmek isterseniz bu taslağı silip yeni bir talep başlatın.
-            </p>
-          </div>
-        )}
-
+      <div className="card p-6 sm:p-8">
         {step.sections.map((section) => (
-          <section key={section.id}>
+          <section
+            key={section.id}
+            className="[&+section]:mt-10 [&+section]:border-t [&+section]:border-surface-200 [&+section]:pt-9"
+          >
             <h2 className="section-title">{section.title}</h2>
             {section.description && (
-              <p className="mt-2 text-sm text-slate-600">{section.description}</p>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
+                {section.description}
+              </p>
             )}
-            <div className="mt-5 grid gap-5 sm:grid-cols-2">
+            <div className="mt-6 grid gap-x-6 gap-y-7 sm:grid-cols-2">
               {visibleFields(section, answers).map((field) => (
                 <FieldInput
                   key={field.key}

@@ -61,16 +61,18 @@ export default function FieldInput({
         {disabled && <Lock className="ml-1.5 inline h-3 w-3 text-slate-400" />}
       </label>
 
-      {field.help && <p className="mt-0.5 text-xs text-slate-500">{field.help}</p>}
+      {field.help && (
+        <p className="mt-1 text-xs leading-relaxed text-slate-500">{field.help}</p>
+      )}
 
       {flagNote !== undefined && flagNote !== null && (
-        <p className="mt-1.5 rounded-md bg-peach-50 px-2.5 py-1.5 text-xs text-peach-800 ring-1 ring-inset ring-peach-200">
+        <p className="mt-2 rounded-md bg-peach-50 px-2.5 py-1.5 text-xs text-peach-800 ring-1 ring-inset ring-peach-200">
           <span className="font-medium">Ajans notu:</span> {flagNote || 'Bu alanı tamamlayın.'}
         </p>
       )}
 
-      <div className="mt-1.5">{renderControl()}</div>
-      {invalid && <p className="mt-1 text-xs text-blossom-600">Bu alan zorunlu.</p>}
+      <div className="mt-2">{renderControl()}</div>
+      {invalid && <p className="mt-1.5 text-xs text-blossom-600">Bu alan zorunlu.</p>}
     </div>
   );
 
@@ -82,7 +84,7 @@ export default function FieldInput({
         return (
           <textarea
             id={id}
-            rows={3}
+            rows={field.rows ?? 4}
             className={base}
             placeholder={field.placeholder}
             disabled={disabled}
@@ -112,7 +114,7 @@ export default function FieldInput({
       case 'multiselect': {
         const list = Array.isArray(value) ? value : [];
         return (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2.5">
             {(field.options ?? []).map((option) => {
               const active = list.includes(option);
               return (

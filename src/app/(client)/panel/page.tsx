@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { AlertCircle, Plus, Sparkles } from 'lucide-react';
+import { AlertCircle, Sparkles } from 'lucide-react';
+import NewRequestButton from '@/components/NewRequestButton';
 import RequestList from '@/components/RequestList';
 import { requireClient } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
@@ -40,12 +41,7 @@ export default async function ClientPanelPage() {
           </p>
         </div>
 
-        {brands.length > 0 && (
-          <Link href="/yeni-talep" className="btn-primary">
-            <Plus className="h-4 w-4" />
-            Yeni iş talebi oluştur
-          </Link>
-        )}
+        {brands.length > 0 && <NewRequestButton />}
       </div>
 
       {brands.length === 0 && (
@@ -71,10 +67,9 @@ export default async function ClientPanelPage() {
               Kısa bir formla ne istediğinizi anlatın; ne kadar net olursa, işi o kadar hızlı ve
               istediğiniz gibi teslim ederiz.
             </p>
-            <Link href="/yeni-talep" className="btn-primary mt-5">
-              <Plus className="h-4 w-4" />
-              Yeni iş talebi oluştur
-            </Link>
+            <div className="mt-5 flex justify-center">
+              <NewRequestButton />
+            </div>
           </div>
         </div>
       )}
