@@ -66,7 +66,15 @@ export function buildDescription(answers: Answers, briefUrl: string): string {
 function hubUrl(path: string): string | null {
   const raw = process.env.HUB_INTEGRATION_URL?.trim();
   if (!raw) return null;
-  const base = raw.replace(/\/+$/, '').replace(/\/brief$/, '');
+
+  // Yapistirma hatalarina karsi toparlama: kose parantezler ve tekrar eden
+  // protokol temizlenir ("https://<https://ornek.app>" gibi degerler sik).
+  let value = raw.replace(/[<>]/g, '').trim();
+  value = value.replace(/^https?:\/\/(?=https?:\/\/)/i, '');
+  if (!/^https?:\/\//i.test(value)) value = `https://${value}`;
+
+  // Eski bicimde sonda /brief kalmis olabilir; taban adrese indiriliyor.
+  const base = value.replace(/\/+$/, '').replace(/\/brief$/, '');
   return `${base}/${path}`;
 }
 
@@ -79,6 +87,17 @@ async function hubFetch(
 
   if (!url || !secret) {
     return { ok: false, error: 'Hub bağlantısı yapılandırılmamış (HUB_INTEGRATION_URL / SECRET).' };
+  }
+
+  // Adres bozuksa fetch'in ham hatasi yerine ne yapilacagini soyleyen bir
+  // mesaj donuyor.
+  try {
+    new URL(url);
+  } catch {
+    return {
+      ok: false,
+      error: `HUB_INTEGRATION_URL geçerli bir adres değil: "${process.env.HUB_INTEGRATION_URL}". Şu biçimde olmalı: https://hub-adresiniz/api/entegrasyon`,
+    };
   }
 
   try {
